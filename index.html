@@ -1,0 +1,1702 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tamlik Properties</title>
+<meta name="description" content="Tamlik Properties — landmark residences and developments.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#08090b;
+    --paper:#f2ede4;
+    --muted:rgba(242,237,228,.62);
+    --faint:rgba(242,237,228,.16);
+    --gold:#01A652;
+    --gold-soft:rgba(1,166,82,.6);
+    --green-text:#3fd186;
+    --serif:"Cormorant Garamond", "Times New Roman", serif;
+    --sans:"Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --gutter:clamp(16px, 4vw, 56px);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--ink);color:var(--paper)}
+  html{scrollbar-width:none}
+  html::-webkit-scrollbar{display:none}
+  body{font-family:var(--sans);font-weight:300;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+  body.locked{overflow:hidden;cursor:none}
+  ::selection{background:var(--gold);color:var(--ink)}
+  a{color:inherit;text-decoration:none}
+
+  #webgl{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:0}
+
+  /* ---------- Loader ---------- */
+  #loader{position:fixed;inset:0;z-index:100;display:grid;place-items:center;pointer-events:all}
+  #loader .half{position:absolute;left:0;right:0;height:50.2%;background:var(--ink)}
+  #loader .half.top{top:0}
+  #loader .half.bot{bottom:0}
+  #loader .mark{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:22px}
+  #loader .logo3d{width:min(920px,94vw);aspect-ratio:1400/480;display:block;margin-bottom:-40px}
+  #loader .mark::before{content:"";position:absolute;left:50%;top:38%;width:min(900px,90vw);height:360px;transform:translate(-50%,-50%);background:radial-gradient(closest-side,rgba(1,166,82,.16),rgba(1,166,82,0));pointer-events:none;z-index:-1}
+  #loader .word{font-family:var(--serif);font-weight:300;font-size:clamp(40px,7vw,84px);letter-spacing:.42em;padding-left:.42em;display:flex;overflow:hidden}
+  #loader .word span{display:inline-block;transform:translateY(110%)}
+  #loader .bar{width:min(240px,50vw);height:1px;background:var(--faint);position:relative;overflow:hidden}
+  #loader .bar i{position:absolute;inset:0;background:var(--gold);transform-origin:left;transform:scaleX(0)}
+  #loader .count{font-size:11px;letter-spacing:.3em;color:var(--muted);font-variant-numeric:tabular-nums}
+
+  .nogl{position:fixed;inset:0;display:none;place-items:center;text-align:center;padding:24px;z-index:5;background:radial-gradient(120% 80% at 50% 100%,#3a2415 0%,#0c0d11 60%)}
+
+</style>
+</head>
+<body class="locked">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="tamlik-logo" viewBox="0 0 1390 394">
+      <path id="roof-left" d="M 0.00 160.50 L 248.50 1.00 L 247.00 47.50 L 0.00 169.50 Z" fill="#595A5C"/>
+      <path id="roof-right" d="M 515.00 156.50 L 504.00 156.50 L 258.00 46.50 L 256.50 1.00 L 515.00 156.50 Z" fill="#01A652"/>
+      <path id="wordmark" d="M 1318.00 392.50 L 1254.00 392.50 L 1208.00 298.50 L 1179.00 392.50 L 1108.50 392.00 L 1179.00 162.50 L 1246.50 163.00 L 1228.00 236.50 L 1315.00 159.50 L 1379.50 160.00 L 1257.50 267.00 L 1318.00 392.50 Z M 167.00 392.50 L 94.50 392.00 L 151.50 217.00 L 121.00 214.50 L 98.00 218.50 L 75.00 227.50 L 53.00 242.50 L 60.50 223.00 L 88.00 189.50 L 104.00 178.50 L 132.00 166.50 L 151.00 162.50 L 299.00 162.50 L 279.00 217.50 L 218.50 219.00 L 167.00 392.50 Z M 456.00 392.50 L 393.00 392.50 L 392.00 342.50 L 317.00 342.50 L 293.00 389.50 L 220.50 389.00 L 330.50 211.00 L 361.00 176.50 L 383.00 163.50 L 456.50 163.00 L 456.00 392.50 Z M 753.00 392.50 L 681.50 392.00 L 726.50 245.00 L 641.00 336.50 L 627.00 343.50 L 617.50 334.00 L 601.00 238.50 L 552.50 391.00 L 480.50 392.00 L 550.00 162.50 L 623.00 162.50 L 644.00 168.50 L 657.50 185.00 L 668.00 235.50 L 681.50 225.00 L 724.00 178.50 L 748.00 163.50 L 820.50 164.00 L 753.00 392.50 Z M 878.00 392.50 L 835.00 387.50 L 812.00 374.50 L 799.50 355.00 L 798.50 326.00 L 845.50 163.00 L 917.00 162.50 L 878.50 287.00 L 874.50 305.00 L 875.50 325.00 L 883.00 334.50 L 892.00 337.50 L 989.50 334.00 L 975.00 387.50 L 878.00 392.50 Z M 1063.00 392.50 L 992.00 392.50 L 991.50 390.00 L 1063.50 164.00 L 1134.00 162.50 L 1063.00 392.50 Z M 396.50 302.00 L 396.00 219.50 L 345.50 302.00 L 396.50 302.00 Z" fill="#01A652"/>
+  </symbol>
+</svg>
+
+<div id="loader" aria-hidden="true">
+  <div class="half top"></div><div class="half bot"></div>
+  <div class="mark">
+    <canvas class="logo3d" id="logoLoader" role="img" aria-label="Tamlik"></canvas>
+  </div>
+</div>
+
+<canvas id="webgl" aria-hidden="true"></canvas>
+<div class="nogl"><div><h2 style="font-family:var(--serif);font-weight:300;font-size:44px">Tamlik Properties</h2><p style="color:var(--muted);margin-top:12px">This experience needs WebGL. Please open it in a current browser.</p></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script>
+  // Loader runs immediately while the 3D scene downloads and builds.
+  (function () {
+    function logoIn() {}   // replaced by the 3D logo once the scene is ready
+    var minTime = new Promise(function (r) { setTimeout(r, 2000); });
+    window.TamlikLoader = {
+      logoIn: logoIn,
+      finish: function (cb) { minTime.then(cb); }
+    };
+  })();
+</script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { SVGLoader } from 'three/addons/loaders/SVGLoader.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { Water } from 'three/addons/objects/Water.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+/* =========================================================
+   Tamlik Properties — cinematic scroll experience
+   One continuous camera move through a procedural city at dusk:
+   aerial → boulevard → signature tower → penthouse → the view → aerial.
+   ========================================================= */
+
+const params = new URLSearchParams(location.search);
+const DEBUG_P = params.has('p') ? parseFloat(params.get('p')) : null;   // ?p=0.5 jumps straight to a shot
+const isMobile = matchMedia('(max-width: 900px)').matches || matchMedia('(pointer: coarse)').matches;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const lerp = THREE.MathUtils.lerp;
+const smooth = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const UP = new THREE.Vector3(0, 1, 0);
+
+// Seeded random so the city is identical on every visit
+let seed = 20260923;
+const rand = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+
+/* ---------------------------------------------------------
+   Tamlik logo in 3D — built from the real SVG: deep extrusion,
+   rounded bevels, lacquered green + brushed-steel roof
+   --------------------------------------------------------- */
+const LOGO_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1390 394">${document.getElementById('tamlik-logo').innerHTML}</svg>`;
+function brushedTexture() {
+  const cv = document.createElement('canvas'); cv.width = cv.height = 512;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#7a7a7a'; ctx.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 4200; i++) {
+    const y = rand() * 512, g = Math.floor(104 + rand() * 40);
+    ctx.strokeStyle = `rgba(${g},${g},${g},${0.1 + rand() * 0.2})`; ctx.lineWidth = 1 + rand() * 1.5;
+    ctx.beginPath(); const x = rand() * 512; ctx.moveTo(x - 60 - rand() * 200, y); ctx.lineTo(x + 60 + rand() * 200, y + (rand() - 0.5) * 1.5); ctx.stroke();
+  }
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1 / 240, 1 / 240);
+  t.anisotropy = 8; t.minFilter = THREE.LinearMipmapLinearFilter;
+  return t;
+}
+function makeLogoMaterials(envIntensity = 1) {
+  const brushed = brushedTexture();
+  // faces: lacquered brand green / brushed steel with a soft grain; sides: deeper metallic tones for depth.
+  // No bump map and no mirror-sharp coats: fine specular detail shimmers as the logo moves
+  return {
+    green: new THREE.MeshPhysicalMaterial({ color: 0x019a4c, metalness: 0.15, roughness: 0.34, roughnessMap: brushed, clearcoat: 1, clearcoatRoughness: 0.16, emissive: 0x01a652, emissiveIntensity: 0.04, envMapIntensity: envIntensity }),
+    greenSide: new THREE.MeshPhysicalMaterial({ color: 0x00502a, metalness: 0.7, roughness: 0.34, clearcoat: 0.6, clearcoatRoughness: 0.2, envMapIntensity: envIntensity }),
+    steel: new THREE.MeshPhysicalMaterial({ color: 0xc9ccd1, metalness: 1, roughness: 0.36, roughnessMap: brushed, anisotropy: 0.4, clearcoat: 0.3, clearcoatRoughness: 0.25, envMapIntensity: envIntensity }),
+    steelSide: new THREE.MeshPhysicalMaterial({ color: 0x5f6266, metalness: 1, roughness: 0.4, envMapIntensity: envIntensity }),
+  };
+}
+function buildLogo3D(mats, depth = 70, bevel = 9) {
+  const data = new SVGLoader().parse(LOGO_SVG);
+  const root = new THREE.Group(), parts = {};
+  for (const path of data.paths) {
+    const geo = new THREE.ExtrudeGeometry(SVGLoader.createShapes(path), {
+      depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel * 0.6, bevelOffset: -bevel * 0.6, bevelSegments: 5, curveSegments: 8,
+    });
+    geo.scale(1, -1, -1);                                 // SVG is y-down; flipping two axes keeps the winding
+    geo.computeBoundingBox();
+    const c = geo.boundingBox.getCenter(new THREE.Vector3());
+    geo.translate(-c.x, -c.y, -c.z);
+    geo.computeVertexNormals();
+    const grey = path.color.getHex() === 0x595a5c;
+    const mesh = new THREE.Mesh(geo, grey ? [mats.steel, mats.steelSide] : [mats.green, mats.greenSide]);
+    const pivot = new THREE.Group();
+    pivot.position.set(c.x - 695, c.y + 197, 0);
+    pivot.userData.base = pivot.position.clone();
+    pivot.add(mesh); root.add(pivot);
+    parts[path.userData.node.id] = pivot;
+  }
+  return { root, parts };
+}
+
+
+
+/* ---------------------------------------------------------
+   Renderer
+   --------------------------------------------------------- */
+const canvas = document.getElementById('webgl');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
+  if (!renderer.capabilities.isWebGL2) throw new Error('WebGL2 required');
+} catch (e) {
+  document.querySelector('.nogl').style.display = 'grid';
+  document.getElementById('loader')?.remove();
+  throw e;
+}
+const DPR = Math.min(devicePixelRatio, isMobile ? 1.25 : 1.75);
+renderer.setPixelRatio(DPR);
+renderer.setSize(innerWidth, innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+const scene = new THREE.Scene();
+const FOG = new THREE.Color(0.03, 0.024, 0.034);
+scene.fog = new THREE.FogExp2(FOG, 0.0005);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.3, 9000);
+const SUN = new THREE.Vector3(-0.36, 0.03, -1).normalize();
+
+/* ---------------------------------------------------------
+   Cloud shadows — one drifting fbm field shared by every
+   surface shader: 1 in sunlight, down to ~0.3 under a cloud
+   --------------------------------------------------------- */
+const cloudU = { uCloudT: { value: 0 }, uCloudDay: { value: 1 } };
+const CLOUD_GLSL = /* glsl */`
+    uniform float uCloudT; uniform float uCloudDay;
+    float cl_h(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+    float cl_n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(cl_h(i), cl_h(i + vec2(1, 0)), f.x), mix(cl_h(i + vec2(0, 1)), cl_h(i + vec2(1, 1)), f.x), f.y); }
+    float cloudShade(vec3 wp){
+      vec2 p = (wp.xz + vec2(-7.0, 4.5) * uCloudT) / 360.0;
+      float s = 0.0, a = 0.5;
+      for (int i = 0; i < 4; i++) { s += a * cl_n(p); p = p * 2.03 + 17.1; a *= 0.5; }
+      float cover = smoothstep(0.42, 0.56, s);
+      return mix(1.0, 1.0 - 0.75 * cover, uCloudDay);
+    }
+`;
+// patch a built-in lit material so its light is dimmed under the clouds
+function addCloudShadows(m) {
+  if (m.userData.clouds) return;
+  m.userData.clouds = true;
+  const prev = m.onBeforeCompile, prevKey = m.customProgramCacheKey();
+  m.onBeforeCompile = (sh, r) => {
+    prev.call(m, sh, r);
+    Object.assign(sh.uniforms, cloudU);
+    sh.fragmentShader = CLOUD_GLSL + sh.fragmentShader.replace('#include <lights_fragment_end>', `#include <lights_fragment_end>
+      float cShade = cloudShade(cameraPosition + transpose(mat3(viewMatrix)) * (-vViewPosition));
+      reflectedLight.directDiffuse *= cShade; reflectedLight.directSpecular *= cShade;
+      reflectedLight.indirectDiffuse *= 0.4 + 0.6 * cShade;`);
+  };
+  m.customProgramCacheKey = () => prevKey + '|clouds';
+}
+
+/* ---------------------------------------------------------
+   Sky — dusk gradient, sun glow, stars. Also baked into the
+   environment map so every reflective surface carries the sunset.
+   --------------------------------------------------------- */
+const skyMat = new THREE.ShaderMaterial({
+  uniforms: { uSun: { value: SUN }, uNight: { value: 0 }, uTime: { value: 0 }, uFog: { value: FOG }, uSunI: { value: 1 } },
+  side: THREE.BackSide, depthWrite: false,
+  vertexShader: /* glsl */`
+    varying vec3 vDir;
+    void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: /* glsl */`
+    uniform vec3 uSun; uniform float uNight; uniform float uTime; uniform vec3 uFog; uniform float uSunI;
+    varying vec3 vDir;
+    float hash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+    float vh(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+    float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(vh(i), vh(i + vec2(1, 0)), f.x), mix(vh(i + vec2(0, 1)), vh(i + vec2(1, 1)), f.x), f.y); }
+    void main(){
+      vec3 d = normalize(vDir);
+      float h = d.y;
+      float sd = max(dot(d, uSun), 0.0);
+      vec3 zenith  = mix(vec3(0.012, 0.02, 0.052), vec3(0.004, 0.007, 0.022), uNight);
+      vec3 mid     = mix(vec3(0.07, 0.055, 0.11),  vec3(0.022, 0.02, 0.05),   uNight);
+      vec3 horizon = mix(vec3(0.72, 0.29, 0.11),   vec3(0.40, 0.14, 0.08),    uNight);
+      vec3 col = mix(mid, zenith, smoothstep(0.02, 0.55, h));
+      float band = exp(-max(h, 0.0) * 7.0);
+      col = mix(col, mix(uFog * 1.4, horizon, pow(sd, 2.5)), band);
+      col += vec3(1.0, 0.46, 0.18) * pow(sd, 22.0) * (0.9 - uNight * 0.5) * uSunI;
+      col += vec3(1.0, 0.78, 0.5) * smoothstep(0.99955, 0.99985, sd) * 8.0 * (1.0 - uNight * 0.8) * uSunI;
+      vec3 q = d * 380.0; vec3 id = floor(q);
+      float r = hash(id);
+      float star = step(0.9965, r) * smoothstep(0.32, 0.0, length(fract(q) - 0.5));
+      star *= smoothstep(0.12, 0.5, h) * (0.35 + 0.65 * uNight) * (0.88 + 0.12 * sin(uTime * 0.6 + r * 80.0));
+      col += vec3(0.9, 0.92, 1.0) * star;
+      // drifting cloud deck, lit orange from beneath on the sun side, cool slate away from it
+      if (h > 0.0) {
+        vec2 cp = d.xz / (h + 0.1) * 1.6 + vec2(uTime * 0.012, -uTime * 0.008);
+        float cs = 0.0, ca = 0.5; vec2 q = cp;
+        for (int i = 0; i < 5; i++) { cs += ca * vn(q); q = q * 2.1 + 3.7; ca *= 0.5; }
+        float dens = smoothstep(0.47, 0.78, cs) * smoothstep(0.0, 0.05, h) * (1.0 - smoothstep(0.35, 0.8, h) * 0.6);
+        float lit = pow(max(dot(normalize(vec3(d.x, 0.0, d.z)), normalize(vec3(uSun.x, 0.0, uSun.z))), 0.0), 3.0);
+        vec3 base = mix(vec3(0.06, 0.05, 0.085), vec3(0.018, 0.018, 0.035), uNight);
+        vec3 glow = mix(vec3(0.95, 0.42, 0.17), vec3(0.3, 0.1, 0.07), uNight);
+        vec3 cc = base + glow * (0.12 + 0.88 * lit) * (0.5 + 0.8 * smoothstep(0.5, 0.95, cs)) * (1.0 - smoothstep(0.02, 0.4, h) * 0.6);
+        col = mix(col, cc, dens * 0.9);
+      }
+      col = mix(col, uFog, smoothstep(0.0, -0.06, h));
+      gl_FragColor = vec4(col, 1.0);
+    }`
+});
+const sky = new THREE.Mesh(new THREE.SphereGeometry(4000, 48, 24), skyMat);
+scene.add(sky);
+{
+  const envScene = new THREE.Scene();
+  envScene.add(new THREE.Mesh(sky.geometry, skyMat));
+  // bake without the sun disc and with a softened glow, so glass and metal carry the sunset
+  // colour but never a hard mirrored sun
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  skyMat.uniforms.uSunI.value = 0.12;
+  scene.environment = pmrem.fromScene(envScene, 0.04, 1, 9000).texture;
+  skyMat.uniforms.uSunI.value = 1;
+  pmrem.dispose();
+}
+
+scene.add(new THREE.HemisphereLight(0x3a4a78, 0x0a0806, 0.55));
+const sunLight = new THREE.DirectionalLight(0xffa46a, 2.4);
+sunLight.position.copy(SUN).multiplyScalar(1000);
+scene.add(sunLight);
+const fill = new THREE.DirectionalLight(0x6f86c9, 0.45);
+fill.position.set(200, 300, 800);
+scene.add(fill);
+
+/* ---------------------------------------------------------
+   Oman: Al Hajar mountains, the Sea of Oman, a beach and a
+   rocky headland — one terrain mesh, heights from ridged noise
+   --------------------------------------------------------- */
+const smoothJS = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+function hash2(x, z) { const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453; return s - Math.floor(s); }
+function vnoise(x, z) {
+  const xi = Math.floor(x), zi = Math.floor(z), xf = x - xi, zf = z - zi;
+  const u = xf * xf * (3 - 2 * xf), v = zf * zf * (3 - 2 * zf);
+  const a = hash2(xi, zi), b = hash2(xi + 1, zi), c = hash2(xi, zi + 1), d = hash2(xi + 1, zi + 1);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+function ridged(x, z) {
+  let s = 0, amp = 0.5, f = 1, w = 1;
+  for (let o = 0; o < 6; o++) {
+    let n = 1 - Math.abs(vnoise(x * f, z * f) * 2 - 1);
+    n *= n * w; w = clamp(n * 1.8, 0, 1);
+    s += n * amp; amp *= 0.5; f *= 2.03;
+  }
+  return s;
+}
+const coastX = (z) => 500 + 45 * Math.sin(z * 0.0023) + 25 * Math.sin(z * 0.0061 + 1.3);
+const FORT = { x: 575, z: -1150 };
+function mountainPart(x, z) {
+  const m = Math.max(smoothJS(-950, -1700, x), smoothJS(-2500, -3300, z), smoothJS(1000, 1800, z) * 0.55);
+  return m > 0 ? m * (40 + 470 * ridged(x * 0.0011 + 3.1, z * 0.0011 - 1.7)) * (0.6 + 0.4 * m) : 0;
+}
+function terrainHeight(x, z) {
+  const c = coastX(z);
+  let base = x < c - 45 ? 0 : x < c ? 0.7 : -Math.min(26, (x - c) * 0.12);
+  base += 52 * Math.exp(-((x - FORT.x) ** 2 + (z - FORT.z) ** 2) / (2 * 62 * 62));   // fort promontory
+  return base + mountainPart(x, z);
+}
+{
+  const S = isMobile ? 220 : 420;
+  const geo = new THREE.PlaneGeometry(10000, 10000, S, S);
+  geo.rotateX(-Math.PI / 2);
+  geo.translate(0, 0, -800);
+  const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3);
+  const rockA = new THREE.Color(0.055, 0.04, 0.034), rockB = new THREE.Color(0.19, 0.115, 0.07);
+  const sand = new THREE.Color(0.2, 0.15, 0.1), land = new THREE.Color(0.02, 0.019, 0.02), c = new THREE.Color();
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), z = pos.getZ(i), h = terrainHeight(x, z);
+    pos.setY(i, h);
+    const m = mountainPart(x, z);
+    if (m > 4 || Math.hypot(x - FORT.x, z - FORT.z) < 120) c.copy(rockA).lerp(rockB, clamp(vnoise(x * 0.01, z * 0.01) * 0.7 + h / 1400, 0, 1));
+    else if (x > coastX(z) - 48) c.copy(sand);
+    else c.copy(land);
+    colors.set([c.r, c.g, c.b], i * 3);
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+  geo.computeVertexNormals();
+  const terrain = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+  terrain.receiveShadow = false;
+  scene.add(terrain);
+}
+
+// Sea of Oman — planar-reflection water (mirrors the sunset, fort, dhows and city lights)
+// with a tileable ocean-wave normal map, plus animated surf along the shoreline
+function makeWaterNormals() {
+  const N = 512, cv = document.createElement('canvas'); cv.width = cv.height = N;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(N, N), H = new Float32Array(N * N);
+  const waves = [];
+  for (let i = 0; i < 64; i++) {                     // integer wave vectors keep the texture seamless
+    let kx = 0, ky = 0;
+    while (kx === 0 && ky === 0) { kx = Math.round((rand() - 0.5) * 30); ky = Math.round((rand() - 0.5) * 30); }
+    const k = Math.hypot(kx, ky);
+    waves.push([kx, ky, 1 / Math.pow(k, 1.15), rand() * Math.PI * 2]);
+  }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    let h = 0;
+    for (const [kx, ky, a, ph] of waves) h += a * Math.sin(2 * Math.PI * (kx * x + ky * y) / N + ph);
+    H[y * N + x] = h;
+  }
+  for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+    const dx = H[y * N + (x + 1) % N] - H[y * N + (x + N - 1) % N];
+    const dy = H[((y + 1) % N) * N + x] - H[((y + N - 1) % N) * N + x];
+    const n = new THREE.Vector3(-dx * 9, -dy * 9, 1).normalize(), k = (y * N + x) * 4;
+    img.data[k] = (n.x * 0.5 + 0.5) * 255; img.data[k + 1] = (n.y * 0.5 + 0.5) * 255; img.data[k + 2] = (n.z * 0.5 + 0.5) * 255; img.data[k + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(cv);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  return t;
+}
+const water = new Water(new THREE.PlaneGeometry(5200, 10400), {
+  textureWidth: isMobile ? 512 : 1024, textureHeight: isMobile ? 512 : 1024,
+  waterNormals: makeWaterNormals(),
+  sunDirection: SUN.clone(), sunColor: 0xffb27a, waterColor: 0x02202a,
+  distortionScale: 1.4, fog: true,
+});
+water.material.uniforms.size.value = 5.5;
+// deeper, clearer water: drop the grey lift Water.js adds to reflections
+water.material.fragmentShader = water.material.fragmentShader.replace(
+  /vec3\(\s*0\.1\s*\)\s*\+\s*reflectionSample\s*\*\s*0\.9/, 'reflectionSample * 0.78');
+// cloud shadows darken the sea as they pass
+Object.assign(water.material.uniforms, cloudU);
+water.material.fragmentShader = CLOUD_GLSL + water.material.fragmentShader.replace(
+  'gl_FragColor = vec4( outgoingLight, alpha );', 'gl_FragColor = vec4( outgoingLight * (0.45 + 0.55 * cloudShade(worldPosition.xyz)), alpha );');
+water.rotation.x = -Math.PI / 2;
+water.position.set(420 + 2600, -0.3, -800);
+scene.add(water);
+
+const surfMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, fog: true, side: THREE.DoubleSide,
+  uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uNight: { value: 0 } }]),
+  vertexShader: /* glsl */`
+    varying vec2 vUv;
+    #include <fog_pars_vertex>
+    void main(){ vUv = uv; vec4 mvPosition = modelViewMatrix * vec4(position, 1.0); gl_Position = projectionMatrix * mvPosition;
+      #include <fog_vertex>
+    }`,
+  fragmentShader: /* glsl */`
+    uniform float uTime; uniform float uNight;
+    varying vec2 vUv;
+    #include <fog_pars_fragment>
+    float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(h2(i), h2(i + vec2(1, 0)), f.x), mix(h2(i + vec2(0, 1)), h2(i + vec2(1, 1)), f.x), f.y); }
+    void main(){
+      float swash = 0.5 + 0.5 * sin(vUv.y * 0.09 - uTime * 0.9 + sin(vUv.y * 0.013) * 4.0);
+      float edge = smoothstep(0.0, 0.08, vUv.x) * smoothstep(0.35 + 0.5 * swash, 0.15, vUv.x);
+      float n = n2(vec2(vUv.y * 0.35, vUv.x * 9.0 - uTime * 0.7)) * 0.6 + n2(vec2(vUv.y * 1.3, vUv.x * 22.0 + uTime)) * 0.4;
+      float a = edge * smoothstep(0.38, 0.75, n);
+      gl_FragColor = vec4(vec3(0.62, 0.6, 0.58) * (1.0 - uNight * 0.55), a * 0.7);
+      #include <fog_fragment>
+    }`
+});
+{
+  const pos = [], uv = [], idx = [];
+  let i = 0;
+  for (let z = -1950; z <= 620; z += 5, i++) {
+    const c = coastX(z) + 1.5;
+    pos.push(c, -0.12, z, c + 16, -0.12, z);
+    uv.push(0, z, 1, z);
+    if (i > 0) { const a = (i - 1) * 2; idx.push(a, a + 1, a + 2, a + 1, a + 3, a + 2); }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(idx);
+  const surf = new THREE.Mesh(g, surfMat);
+  surf.renderOrder = 2;
+  scene.add(surf);
+}
+
+
+/* ---------------------------------------------------------
+   Muscat — a low, white city: plaster facades with arched
+   windows, roof terraces, neighbourhood mosques with lit minarets
+   --------------------------------------------------------- */
+const TOWER_Z = -600;
+const CELL = 60;
+const GRAND = { x: -265, z: -245 };
+const cityVert = /* glsl */`
+    varying vec3 vWorld; varying vec3 vN; varying vec3 vSeed; varying float vLocalY; varying float vH;
+    #include <fog_pars_vertex>
+    void main(){
+      vec4 wp = modelMatrix * instanceMatrix * vec4(position, 1.0);
+      vWorld = wp.xyz;
+      vN = normalize(mat3(instanceMatrix) * normal);
+      vSeed = instanceMatrix[3].xyz;
+      vLocalY = position.y;
+      vH = length(instanceMatrix[1].xyz);
+      vec4 mvPosition = viewMatrix * wp;
+      gl_Position = projectionMatrix * mvPosition;
+      #include <fog_vertex>
+    }`;
+const cityFrag = /* glsl */`
+    uniform float uLit; uniform float uNight;
+    ${CLOUD_GLSL}
+    varying vec3 vWorld; varying vec3 vN; varying vec3 vSeed; varying float vLocalY; varying float vH;
+    #include <fog_pars_fragment>
+    float hash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
+    float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float n2(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+      return mix(mix(h2(i), h2(i + vec2(1, 0)), f.x), mix(h2(i + vec2(0, 1)), h2(i + vec2(1, 1)), f.x), f.y); }
+    float fbm(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < 4; i++) { s += a * n2(p); p *= 2.07; a *= 0.5; } return s; }
+    void main(){
+      vec3 n = normalize(vN);
+      float tint = hash(vSeed * 0.37);
+      float cs = cloudShade(vWorld);
+      vec3 plaster = mix(vec3(0.37, 0.34, 0.3), vec3(0.38, 0.32, 0.24), tint) * mix(vec3(0.34, 0.35, 0.42), vec3(1.1, 1.02, 0.94), cs);   // white / sand limewash, dimmed under cloud
+      vec3 amb = mix(vec3(0.075, 0.075, 0.1), vec3(0.03, 0.03, 0.05), uNight);
+      vec3 sunc = vec3(1.0, 0.5, 0.22) * (1.0 - uNight * 0.85);
+      float sunF = max(0.0, dot(n, normalize(vec3(-0.36, 0.25, -1.0))));
+      float along = abs(n.x) > 0.5 ? vWorld.z : vWorld.x;
+      float y = vWorld.y, yl = vLocalY * vH;
+      float grime = fbm(vec2(along * 0.14, y * 0.14) + vSeed.xz * 0.013);
+      float streak = fbm(vec2(along * 0.9, y * 0.03));
+      vec3 wall = plaster * (amb * 3.0 + sunc * sunF * 0.6 * cs);
+      wall *= 0.8 + 0.28 * grime;
+      wall *= 1.0 - 0.16 * smoothstep(0.55, 0.8, streak);
+      vec3 col;
+    #ifdef PARAPET
+      // stepped Omani crenellations cut out of the parapet band
+      float u = abs(fract(along / 1.8) - 0.5);
+      float t = vLocalY;
+      if (t > 0.45 && !(t < 0.72 && u < 0.3) && !(u < 0.15)) discard;
+      col = wall * (1.05 + 0.1 * step(0.45, t));
+    #else
+      if (n.y > 0.5) {
+        col = plaster * 0.9 * (amb * 1.7 + sunc * 0.05) * (0.65 + 0.55 * fbm(vWorld.xz * 0.25));
+      } else {
+        float topDist = vH - yl;
+        wall *= 1.0 - 0.1 * step(fract(y / 3.8), 0.045);                                 // floor slabs
+        wall *= 1.0 - 0.28 * smoothstep(1.3, 0.45, topDist) * step(0.2, topDist);         // shadow under the cornice
+        wall += plaster * amb * 0.9 * smoothstep(0.35, 0.0, topDist);                    // cornice lip
+        wall *= 0.5 + 0.5 * smoothstep(0.0, 3.5, yl);                                    // ground contact
+        wall += vec3(1.0, 0.55, 0.25) * 0.05 * (1.0 - smoothstep(0.0, 9.0, y)) * (0.3 + uNight);   // street glow
+
+        vec2 cell = vec2(along / 3.3, y / 3.8);
+        vec2 id = floor(cell), f = fract(cell);
+        float s = dot(vSeed, vec3(0.013, 1.0, 0.029)) + n.x * 3.0 + n.z * 7.0;
+        float r  = hash(vec3(floor(id.x / 2.0), id.y, s));
+        float r2 = hash(vec3(id, s + 4.1));
+        float r3 = hash(vec3(id.x, id.y * 1.7, s + 9.3));
+        float qx = abs(f.x - 0.5);
+        float shapeW = max(step(qx, 0.2) * step(0.16, f.y) * step(f.y, 0.6), step(length(vec2(qx, (f.y - 0.6) * 1.25)), 0.2) * step(0.6, f.y));
+        float shapeF = max(step(qx, 0.26) * step(0.1, f.y) * step(f.y, 0.6), step(length(vec2(qx, (f.y - 0.6) * 1.25)), 0.26) * step(0.6, f.y));
+        float sill = step(qx, 0.29) * step(0.07, f.y) * step(f.y, 0.12);
+        bool ground = yl < 4.4 && y < 5.0;
+        float win = ground ? 0.0 : shapeW;
+        float frame = ground ? 0.0 : shapeF - shapeW;
+        float aa = smoothstep(0.2, 0.75, max(fwidth(cell.x), fwidth(cell.y)));          // fade to average early: no shimmer
+
+        col = wall;
+        col = mix(col, wall * 1.3, frame * (1.0 - aa));                                  // carved plaster surrounds
+        col = mix(col, wall * 0.5, (ground ? 0.0 : sill) * (1.0 - aa));                  // sill shadow
+        // window: recessed glass or carved wooden mashrabiya shutter
+        float shutter = step(r3, 0.24);
+        vec2 lg = abs(fract(vec2(f.x * 11.0, f.y * 13.0)) - 0.5);
+        float lattice = step(0.3, max(lg.x, lg.y));
+        float recess = smoothstep(0.2, 0.14, qx) * smoothstep(0.16, 0.22, f.y);
+        vec3 glass = vec3(0.012, 0.013, 0.018) + vec3(0.02, 0.026, 0.045) * (1.0 - uNight) * recess;
+        vec3 winCol = mix(glass, vec3(0.07, 0.04, 0.022), shutter * lattice);
+        float lit = step(1.0 - uLit, r) * step(0.1, r2);
+        vec3 warm = mix(vec3(1.0, 0.56, 0.26), vec3(1.0, 0.8, 0.58), r2);
+        vec3 nearLight = lit * warm * (0.25 + 0.85 * r2) * mix(1.0, 0.5 * (1.0 - lattice), shutter) * (0.6 + 0.4 * recess);
+        vec3 farLight = uLit * 0.9 * warm * 0.55;
+        float wA = mix(win, 0.26, aa);
+        col = mix(col, winCol, wA);
+        col += wA * mix(nearLight, farLight, aa);
+        // ground floor: shopfronts with awnings
+        if (ground) {
+          float sc = fract(along / 6.5);
+          float sid = floor(along / 6.5);
+          float shop = step(abs(sc - 0.5), 0.36) * step(0.35, yl) * step(yl, 3.2);
+          float awning = step(abs(sc - 0.5), 0.41) * step(3.25, yl) * step(yl, 3.75);
+          float open = step(0.3, hash(vec3(sid, s, 2.0)));
+          vec3 awnC = mix(vec3(0.11, 0.03, 0.02), vec3(0.02, 0.07, 0.045), step(0.5, hash(vec3(sid, s, 5.0))));
+          col = mix(col, vec3(0.02, 0.018, 0.016), shop);
+          col += shop * open * vec3(1.0, 0.72, 0.42) * (0.45 + 0.6 * uNight) * (0.75 + 0.25 * n2(vec2(along * 0.4, yl)));
+          col = mix(col, awnC * (0.6 + 0.4 * uNight), awning * (1.0 - aa));
+        }
+      }
+    #endif
+      gl_FragColor = vec4(col, 1.0);
+      #include <fog_fragment>
+    }`;
+const cityUniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uLit: { value: 0.28 }, uNight: { value: 0 } }]);
+Object.assign(cityUniforms, cloudU);
+const cityMat = new THREE.ShaderMaterial({ uniforms: cityUniforms, fog: true, vertexShader: cityVert, fragmentShader: cityFrag });
+const parapetMat = new THREE.ShaderMaterial({ uniforms: cityUniforms, fog: true, vertexShader: cityVert, fragmentShader: cityFrag, defines: { PARAPET: 1 }, side: THREE.DoubleSide });
+
+
+const buildings = [], mosqueSpots = [];
+for (let gx = -13; gx <= 7; gx++) {
+  for (let gz = -30; gz <= 8; gz++) {
+    if (gx === 0) continue;                                                             // grand boulevard
+    if (Math.abs(gx) <= 1 && Math.abs(gz * CELL - TOWER_Z) <= CELL * 1.6) continue;     // tower plaza
+    if (isMobile && rand() < 0.35) continue;
+    const cx = gx * CELL, cz = gz * CELL;
+    if (Math.abs(cx - GRAND.x) < 100 && Math.abs(cz - GRAND.z) < 90) continue;          // grand mosque grounds
+    if (cx + 30 > coastX(cz) - 60) continue;                                            // leave the corniche and beach
+    if (Math.abs(gx) > 1 && rand() < 0.035) { mosqueSpots.push([cx, cz]); continue; }
+    const split = rand() < 0.6 ? 2 : 1;
+    const lot = (CELL - 16) / split;
+    for (let i = 0; i < split; i++) for (let j = 0; j < split; j++) {
+      if (split === 2 && rand() < 0.15) continue;
+      const w = lot * (0.66 + rand() * 0.3);
+      const d = lot * (0.66 + rand() * 0.3);
+      // Muscat stays low: most buildings 2–6 storeys, the odd taller block
+      let h = 7 + rand() * 14 + Math.pow(rand(), 4) * 40;
+      if (Math.abs(gx) === 1) h = 16 + rand() * 22;                                     // frame the boulevard
+      const x = cx - (CELL - 16) / 2 + lot * (i + 0.5) + (rand() - 0.5) * 4;
+      const z = cz - (CELL - 16) / 2 + lot * (j + 0.5) + (rand() - 0.5) * 4;
+      buildings.push([x, z, w, h, d]);
+    }
+  }
+}
+{
+  const geo = new THREE.BoxGeometry(1, 1, 1);
+  geo.translate(0, 0.5, 0);
+  const extra = buildings.filter(() => rand() < 0.45);                                  // rooftop stair towers / majlis rooms
+  const mesh = new THREE.InstancedMesh(geo, cityMat, buildings.length + extra.length);
+  const m = new THREE.Matrix4();
+  buildings.forEach(([x, z, w, h, d], i) => { m.makeScale(w, h, d).setPosition(x, 0, z); mesh.setMatrixAt(i, m); });
+  extra.forEach(([x, z, w, h, d], i) => {
+    const s = 0.28 + rand() * 0.2;
+    m.makeScale(w * s, 3.4, d * s).setPosition(x + (rand() - 0.5) * w * 0.4, h, z + (rand() - 0.5) * d * 0.4);
+    mesh.setMatrixAt(buildings.length + i, m);
+  });
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+
+  // parapet band (walls only — no lid) that the shader cuts into stepped crenellations
+  const pGeo = new THREE.BoxGeometry(1, 1, 1);
+  pGeo.translate(0, 0.5, 0);
+  const keep = [];
+  pGeo.groups.forEach((g) => { if (g.materialIndex !== 2 && g.materialIndex !== 3) for (let k = 0; k < g.count; k++) keep.push(pGeo.index.array[g.start + k]); });
+  pGeo.setIndex(keep); pGeo.clearGroups();
+  const parapets = new THREE.InstancedMesh(pGeo, parapetMat, buildings.length);
+  buildings.forEach(([x, z, w, h, d], i) => { m.makeScale(w + 0.15, 1.5, d + 0.15).setPosition(x, h, z); parapets.setMatrixAt(i, m); });
+  parapets.frustumCulled = false;
+  scene.add(parapets);
+
+  // rooftop water tanks — a Muscat signature — white and pale blue
+  const tanks = [];
+  for (const [x, z, w, h, d] of buildings) {
+    if (rand() < 0.45) continue;
+    const n = 1 + Math.floor(rand() * 3);
+    for (let k = 0; k < n; k++) tanks.push([x + (rand() - 0.5) * w * 0.7, h, z + (rand() - 0.5) * d * 0.7, 0.8 + rand() * 0.5]);
+  }
+  const tGeo = new THREE.CylinderGeometry(1, 1, 1, 14); tGeo.translate(0, 0.5, 0);
+  const tankMesh = new THREE.InstancedMesh(tGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.55 }), tanks.length);
+  const c = new THREE.Color();
+  tanks.forEach(([x, y, z, s], i) => {
+    m.makeScale(s * 0.75, s * 1.5, s * 0.75).setPosition(x, y, z); tankMesh.setMatrixAt(i, m);
+    tankMesh.setColorAt(i, rand() < 0.3 ? c.setRGB(0.55, 0.68, 0.8) : c.setRGB(0.85, 0.84, 0.8));
+  });
+  scene.add(tankMesh);
+}
+
+
+const plasterMat = new THREE.MeshStandardMaterial({ color: 0xded3c0, roughness: 0.85, emissive: 0x2a1d10, emissiveIntensity: 0.35 });
+// neighbourhood mosques: base, drum, dome and a single minaret, instanced
+{
+  const parts = [];
+  const base = new THREE.BoxGeometry(22, 8, 22); base.translate(0, 4, 0); parts.push(base);
+  const drum = new THREE.CylinderGeometry(6, 6, 3, 24); drum.translate(0, 9.5, 0); parts.push(drum);
+  const dome = new THREE.SphereGeometry(6, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2); dome.scale(1, 1.15, 1); dome.translate(0, 11, 0); parts.push(dome);
+  const shaft = new THREE.CylinderGeometry(0.9, 1.2, 28, 10); shaft.translate(9, 14, 9); parts.push(shaft);
+  const gallery = new THREE.CylinderGeometry(1.7, 1.7, 0.8, 12); gallery.translate(9, 22, 9); parts.push(gallery);
+  const cone = new THREE.ConeGeometry(1, 3.5, 10); cone.translate(9, 29.7, 9); parts.push(cone);
+  const geo = mergeGeometries(parts);
+  const mesh = new THREE.InstancedMesh(geo, plasterMat, mosqueSpots.length);
+  const m = new THREE.Matrix4();
+  mosqueSpots.forEach(([x, z], i) => { m.makeRotationY(Math.floor(rand() * 4) * Math.PI / 2).setPosition(x, 0, z); mesh.setMatrixAt(i, m); });
+  scene.add(mesh);
+}
+
+// Grand mosque: platform, prayer hall, colonnade, great dome and five minarets
+{
+  const g = new THREE.Group(); g.position.set(GRAND.x, 0, GRAND.z);
+  const domeMat = new THREE.MeshStandardMaterial({ color: 0xcdb07a, roughness: 0.3, metalness: 0.55, emissive: 0x3d2a10, emissiveIntensity: 0.6 });
+  const add = (geo, mat, x, y, z) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); g.add(o); return o; };
+  add(new THREE.BoxGeometry(170, 5, 130), plasterMat, 0, 2.5, 0);
+  add(new THREE.BoxGeometry(70, 20, 60), plasterMat, 0, 15, -12);
+  for (let k = -7; k <= 7; k++) {                                                        // arcade piers
+    add(new THREE.BoxGeometry(1.6, 11, 1.6), plasterMat, k * 10, 10.5, 58);
+    add(new THREE.BoxGeometry(1.6, 11, 1.6), plasterMat, k * 10, 10.5, -58);
+  }
+  add(new THREE.BoxGeometry(152, 2.2, 3), plasterMat, 0, 17, 58);
+  add(new THREE.BoxGeometry(152, 2.2, 3), plasterMat, 0, 17, -58);
+  add(new THREE.CylinderGeometry(19, 20, 9, 48), plasterMat, 0, 29.5, -12);
+  const dome = add(new THREE.SphereGeometry(19, 48, 24, 0, Math.PI * 2, 0, Math.PI / 2), domeMat, 0, 34, -12);
+  dome.scale.y = 1.35;
+  add(new THREE.ConeGeometry(1.2, 9, 12), domeMat, 0, 64, -12);
+  const minaret = (x, z, h, r) => {
+    add(new THREE.CylinderGeometry(r * 0.75, r, h, 12), plasterMat, x, 5 + h / 2, z);
+    for (const f of [0.45, 0.72, 0.9]) add(new THREE.CylinderGeometry(r * 1.45, r * 1.2, 1.2, 14), plasterMat, x, 5 + h * f, z);
+    add(new THREE.ConeGeometry(r * 0.8, r * 3.2, 12), domeMat, x, 5 + h + r * 1.6, z);
+  };
+  minaret(0, 62, 88, 2.6);
+  for (const [x, z] of [[-78, -58], [78, -58], [-78, 58], [78, 58]]) minaret(x, z, 44, 1.7);
+  scene.add(g);
+}
+
+// Fort on the headland — in the spirit of Al Jalali / Mirani: rocky promontory, mud-plaster
+// walls, tapered round towers, stepped crenellations, arrow slits, a gate, warm uplighting
+const fortLights = [];
+{
+  // rocky promontory: a fine-detail patch over the coarse terrain
+  const P = terrainHeight(FORT.x, FORT.z) + 1.5;
+  {
+    const S = isMobile ? 90 : 180, size = 480;
+    const geo = new THREE.PlaneGeometry(size, size, S, S);
+    geo.rotateX(-Math.PI / 2); geo.translate(FORT.x, 0, FORT.z);
+    const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3);
+    const rockA = new THREE.Color(0.05, 0.036, 0.03), rockB = new THREE.Color(0.2, 0.13, 0.08), c = new THREE.Color();
+    for (let i = 0; i < pos.count; i++) {
+      const x = pos.getX(i), z = pos.getZ(i), d = Math.hypot(x - FORT.x, z - FORT.z);
+      const mask = Math.exp(-(d * d) / (2 * 115 * 115));
+      const rock = ridged(x * 0.022, z * 0.022) * 16 + vnoise(x * 0.12, z * 0.12) * 2.2;
+      let h = terrainHeight(x, z) + 1.5 + rock * mask;
+      const plateau = smoothJS(62, 44, d);
+      h = h * (1 - plateau) + (P + vnoise(x * 0.3, z * 0.3) * 0.4) * plateau;
+      pos.setY(i, h);
+      c.copy(rockA).lerp(rockB, clamp(vnoise(x * 0.05, z * 0.05) * 0.8 + (h - 20) / 90, 0, 1));
+      colors.set([c.r, c.g, c.b], i * 3);
+    }
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geo.computeVertexNormals();
+    scene.add(new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, flatShading: true })));
+  }
+
+  // weathered mud-plaster texture (colour + bump)
+  const cv = document.createElement('canvas'); cv.width = cv.height = 512;
+  const ctx = cv.getContext('2d');
+  ctx.fillStyle = '#b8936a'; ctx.fillRect(0, 0, 512, 512);
+  for (let i = 0; i < 2400; i++) {
+    const r = 4 + rand() * 30, x = rand() * 512, y = rand() * 512;
+    const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+    const tone = rand() < 0.5 ? '120,88,58' : '214,182,140';
+    g.addColorStop(0, `rgba(${tone},${0.08 + rand() * 0.12})`); g.addColorStop(1, `rgba(${tone},0)`);
+    ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+  }
+  ctx.strokeStyle = 'rgba(90,64,40,0.18)'; ctx.lineWidth = 2;
+  for (let y = 16; y < 512; y += 32) { ctx.beginPath(); ctx.moveTo(0, y + (rand() - 0.5) * 3); for (let x = 0; x <= 512; x += 32) ctx.lineTo(x, y + (rand() - 0.5) * 4); ctx.stroke(); }
+  for (let i = 0; i < 40000; i++) { ctx.fillStyle = `rgba(${rand() < 0.5 ? '255,240,220' : '40,25,15'},${rand() * 0.12})`; ctx.fillRect(rand() * 512, rand() * 512, 1 + rand() * 2, 1 + rand() * 2); }
+  const plasterTex = new THREE.CanvasTexture(cv);
+  plasterTex.colorSpace = THREE.SRGBColorSpace;
+  plasterTex.wrapS = plasterTex.wrapT = THREE.RepeatWrapping; plasterTex.repeat.set(3, 1.5);
+  plasterTex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const bumpTex = plasterTex.clone(); bumpTex.colorSpace = THREE.NoColorSpace;
+
+  const fortMat = new THREE.MeshStandardMaterial({ map: plasterTex, bumpMap: bumpTex, bumpScale: 1.2, roughness: 0.95 });
+  // floodlit from below: warm light that fades up the walls, like the forts above Muttrah at night
+  const baseY = P;
+  fortMat.onBeforeCompile = (sh) => {
+    sh.uniforms.uBase = { value: baseY };
+    sh.vertexShader = 'varying float vWY;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvWY = (modelMatrix * vec4(transformed, 1.0)).y;');
+    sh.fragmentShader = 'uniform float uBase;\nvarying float vWY;\n' + sh.fragmentShader.replace('#include <emissivemap_fragment>',
+      '#include <emissivemap_fragment>\nfloat up = 1.0 - smoothstep(uBase - 2.0, uBase + 26.0, vWY);\ntotalEmissiveRadiance += diffuseColor.rgb * vec3(1.0, 0.62, 0.34) * (0.12 + 0.75 * up * up);');
+  };
+  const darkMat = new THREE.MeshStandardMaterial({ color: 0x0b0806, roughness: 1 });
+  const doorMat = new THREE.MeshStandardMaterial({ color: 0x3b2413, roughness: 0.8, emissive: 0x2a1406, emissiveIntensity: 0.6 });
+
+  const g = new THREE.Group(); g.position.set(FORT.x, P - 1, FORT.z);
+  const add = (geo, mat, x, y, z, ry = 0) => { const o = new THREE.Mesh(geo, mat); o.position.set(x, y, z); o.rotation.y = ry; g.add(o); return o; };
+
+  // stepped merlon (Omani crenellation) shared geometry
+  const ms = new THREE.Shape();
+  ms.moveTo(-0.75, 0); ms.lineTo(0.75, 0); ms.lineTo(0.75, 0.8); ms.lineTo(0.45, 0.8); ms.lineTo(0.45, 1.3);
+  ms.lineTo(0.18, 1.3); ms.lineTo(0.18, 1.8); ms.lineTo(-0.18, 1.8); ms.lineTo(-0.18, 1.3); ms.lineTo(-0.45, 1.3); ms.lineTo(-0.45, 0.8); ms.lineTo(-0.75, 0.8);
+  const merlonGeo = new THREE.ExtrudeGeometry(ms, { depth: 0.7, bevelEnabled: false }); merlonGeo.translate(0, 0, -0.35);
+  const merlonPos = [];
+  const slitGeo = new THREE.BoxGeometry(0.35, 1.6, 0.4);
+
+  // towers: [x, z, radius, height]
+  const towers = [[-30, 24, 8, 22], [30, -24, 8, 22], [-28, -26, 6.5, 18], [26, 28, 6.5, 18], [6, 2, 10, 30]];
+  const wallH = 13;
+  // curtain walls between the outer towers
+  const ring = [towers[0], towers[3], towers[1], towers[2]];
+  for (let k = 0; k < 4; k++) {
+    const [ax, az] = ring[k], [bx, bz] = ring[(k + 1) % 4];
+    const len = Math.hypot(bx - ax, bz - az), ang = Math.atan2(bz - az, bx - ax);
+    const wall = add(new THREE.BoxGeometry(len, wallH, 3.2), fortMat, (ax + bx) / 2, wallH / 2, (az + bz) / 2, -ang);
+    wall.geometry.attributes.uv.array.forEach((v, i, arr) => { arr[i] = v * (i % 2 === 0 ? len / 12 : 1); });
+    for (let t = 0.12; t < 0.9; t += 1.9 / len) merlonPos.push([ax + (bx - ax) * t, wallH, az + (bz - az) * t, -ang]);
+    for (let t = 0.2; t < 0.85; t += 0.16) {
+      const nx = Math.sin(-ang) * 1.62, nz = Math.cos(-ang) * 1.62;
+      for (const sgn of [1, -1]) add(slitGeo, darkMat, ax + (bx - ax) * t + nx * sgn, wallH * 0.62, az + (bz - az) * t + nz * sgn, -ang);
+    }
+  }
+  for (const [x, z, r, h] of towers) {
+    add(new THREE.CylinderGeometry(r * 0.88, r * 1.06, h, 40, 1), fortMat, x, h / 2, z);
+    add(new THREE.CylinderGeometry(r * 0.95, r * 0.95, 0.7, 40), fortMat, x, h - 0.2, z);        // parapet string course
+    const n = Math.round(r * 2.2);
+    for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2; merlonPos.push([x + Math.cos(a) * r * 0.86, h + 0.15, z + Math.sin(a) * r * 0.86, -a + Math.PI / 2]); }
+    for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2 + 0.3; add(slitGeo, darkMat, x + Math.cos(a) * r * 0.97, h * 0.55, z + Math.sin(a) * r * 0.97, -a + Math.PI / 2); }
+    fortLights.push([FORT.x + x, P + h + 2.5, FORT.z + z]);
+  }
+  // keep: a small square house atop the central tower
+  add(new THREE.BoxGeometry(7, 5, 7), fortMat, 6, 32.5, 2);
+  for (const [dx, dz] of [[-2.2, 3.52], [2.2, 3.52]]) add(new THREE.BoxGeometry(0.9, 1.6, 0.1), darkMat, 6 + dx, 33, 2 + dz);
+  // gate facing the city, with a carved wooden door and pointed arch
+  {
+    const [ax, az] = towers[0], [bx, bz] = towers[2];
+    const gx = (ax + bx) / 2 - 1.7, gz = (az + bz) / 2;
+    add(new THREE.BoxGeometry(1.5, 13.5, 9), fortMat, gx - 0.6, 6.75, gz);
+    const arch = new THREE.Shape(); arch.moveTo(-2.2, 0); arch.lineTo(2.2, 0); arch.lineTo(2.2, 4.5); arch.quadraticCurveTo(2.2, 6.8, 0, 7.6); arch.quadraticCurveTo(-2.2, 6.8, -2.2, 4.5);
+    const door = add(new THREE.ShapeGeometry(arch), doorMat, gx - 1.37, 0, gz, -Math.PI / 2);
+    door.material.side = THREE.DoubleSide;
+    for (let k = -1; k <= 1; k++) add(new THREE.BoxGeometry(0.05, 0.12, 4.2), new THREE.MeshStandardMaterial({ color: 0xc9a060, metalness: 1, roughness: 0.4 }), gx - 1.42, 1.5 + (k + 1) * 1.8, gz);
+    fortLights.push([FORT.x + gx - 3, P + 8.5, FORT.z + gz - 3.2], [FORT.x + gx - 3, P + 8.5, FORT.z + gz + 3.2]);
+  }
+  const merlons = new THREE.InstancedMesh(merlonGeo, fortMat, merlonPos.length);
+  const d = new THREE.Object3D();
+  merlonPos.forEach(([x, y, z, ry], i) => { d.position.set(x, y, z); d.rotation.set(0, ry, 0); d.updateMatrix(); merlons.setMatrixAt(i, d.matrix); });
+  g.add(merlons);
+  scene.add(g);
+}
+
+
+// Date palms — boulevard, plaza and corniche, instanced
+const PALM = (() => {
+  const trunk = new THREE.CylinderGeometry(0.22, 0.4, 10, 7, 8);
+  trunk.translate(0, 5, 0);
+  const tp = trunk.attributes.position;
+  for (let i = 0; i < tp.count; i++) tp.setX(i, tp.getX(i) + Math.pow(tp.getY(i) / 10, 2) * 0.8);
+  trunk.computeVertexNormals();
+  const fronds = [];
+  for (let k = 0; k < 16; k++) {
+    const f = new THREE.PlaneGeometry(1.0, 4.8, 1, 8);
+    f.translate(0, 2.4, 0);
+    const p = f.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const t = p.getY(i) / 4.8;
+      p.setZ(i, t * 4.6); p.setY(i, 1.4 * t - (k % 2 ? 2.8 : 2.0) * t * t); p.setX(i, p.getX(i) * (1 - t * 0.75));
+    }
+    f.rotateY(k / 16 * Math.PI * 2 + (k % 3) * 0.12);
+    f.translate(0.8, 10, 0);
+    fronds.push(f);
+  }
+  const crown = mergeGeometries(fronds);
+  crown.computeVertexNormals();
+  return { trunk, crown };
+})();
+const palmSpots = [];
+for (let z = 470; z > -1850; z -= 18) {
+  if (z < TOWER_Z + 100 && z > TOWER_Z - 100) continue;
+  palmSpots.push([-31, z], [31, z + 9]);
+}
+for (let a = 0; a < 14; a++) { const t = a / 14 * Math.PI * 2; palmSpots.push([Math.cos(t) * 62, TOWER_Z + Math.sin(t) * 62]); }
+for (let z = 480; z > -1800; z -= 22) palmSpots.push([coastX(z) - 34, z]);
+const palmTrunkMat = new THREE.MeshStandardMaterial({ color: 0x4a3625, roughness: 1 });
+const palmLeafMat = new THREE.MeshStandardMaterial({ color: 0x33452a, roughness: 0.9, side: THREE.DoubleSide, emissive: 0x0c1206 });
+{
+  const trunks = new THREE.InstancedMesh(PALM.trunk, palmTrunkMat, palmSpots.length);
+  const crowns = new THREE.InstancedMesh(PALM.crown, palmLeafMat, palmSpots.length);
+  const d = new THREE.Object3D();
+  palmSpots.forEach(([x, z], i) => {
+    d.position.set(x, 0, z); d.rotation.set(0, rand() * Math.PI * 2, 0); d.scale.setScalar(0.85 + rand() * 0.4); d.updateMatrix();
+    trunks.setMatrixAt(i, d.matrix); crowns.setMatrixAt(i, d.matrix);
+  });
+  scene.add(trunks, crowns);
+}
+
+// Dhows — traditional wooden boats with lateen sails, bobbing offshore
+const dhows = [];
+{
+  const hullShape = new THREE.Shape();
+  hullShape.moveTo(-9, 3.2); hullShape.quadraticCurveTo(-7.5, 0.2, -4, 0); hullShape.lineTo(5, 0);
+  hullShape.quadraticCurveTo(8.5, 0.6, 10, 4.2); hullShape.lineTo(-9, 3.2);
+  const hullGeo = new THREE.ExtrudeGeometry(hullShape, { depth: 4.2, bevelEnabled: true, bevelSize: 0.5, bevelThickness: 0.8, bevelSegments: 2 });
+  hullGeo.translate(0, -1, -2.1);
+  const sailShape = new THREE.Shape();
+  sailShape.moveTo(-7, 3.5); sailShape.lineTo(8.5, 17); sailShape.lineTo(4.5, 3.5); sailShape.lineTo(-7, 3.5);
+  const sailGeo = new THREE.ShapeGeometry(sailShape);
+  const hullMat = new THREE.MeshStandardMaterial({ color: 0x4a2f1a, roughness: 0.75 });
+  const sailMat = new THREE.MeshStandardMaterial({ color: 0xe0d4bd, roughness: 1, side: THREE.DoubleSide, emissive: 0x1e150c });
+  const mastGeo = new THREE.CylinderGeometry(0.15, 0.2, 15, 6); mastGeo.translate(1.5, 9, 0);
+  for (let i = 0; i < 9; i++) {
+    const z = 380 - i * 250 + (rand() - 0.5) * 120;
+    const g = new THREE.Group();
+    g.add(new THREE.Mesh(hullGeo, hullMat), new THREE.Mesh(sailGeo, sailMat), new THREE.Mesh(mastGeo, hullMat));
+    let x = coastX(z) + 110 + rand() * 520;
+    if (Math.hypot(x - FORT.x, z - FORT.z) < 230) x += 320;
+    g.position.set(x, 0.2, z);
+    g.rotation.y = rand() * Math.PI * 2;
+    g.scale.setScalar(1.3);
+    g.userData.phase = rand() * 10;
+    scene.add(g); dhows.push(g);
+  }
+}
+
+
+/* ---------------------------------------------------------
+   Street lamps + traffic — points animated entirely on the GPU
+   --------------------------------------------------------- */
+const lightsMat = new THREE.ShaderMaterial({
+  transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  uniforms: { uTime: { value: 0 }, uScale: { value: 1 } },
+  vertexShader: /* glsl */`
+    attribute vec3 aColor; attribute vec4 aMove; attribute float aSize;   // aMove: dirX, dirZ, speed, loop length
+    uniform float uTime; uniform float uScale;
+    varying vec3 vColor; varying float vFade;
+    void main(){
+      vec3 p = position;
+      vFade = 1.0;
+      if (aMove.z > 0.0) {
+        float t = mod(uTime * aMove.z + floor(aSize) * 7.31, aMove.w);
+        p.x += aMove.x * t; p.z += aMove.y * t;
+        vFade = smoothstep(0.0, 80.0, t) * smoothstep(aMove.w, aMove.w - 80.0, t);
+      }
+      vec4 mv = modelViewMatrix * vec4(p, 1.0);
+      gl_Position = projectionMatrix * mv;
+      float ps = fract(aSize) * 2.0 * uScale / -mv.z;
+      gl_PointSize = clamp(ps, 2.0, 26.0);
+      vFade *= smoothstep(0.0, 2.0, ps) * 0.85;                   // sub-pixel lights dim instead of popping
+      vColor = aColor;
+      vFade *= exp(-0.00065 * -mv.z);
+    }`,
+  fragmentShader: /* glsl */`
+    varying vec3 vColor; varying float vFade;
+    void main(){
+      float a = smoothstep(0.5, 0.0, length(gl_PointCoord - 0.5));
+      gl_FragColor = vec4(vColor * a * a * vFade, 1.0);
+    }`
+});
+{
+  const pos = [], col = [], mov = [], size = [];
+  // aSize packs: fract = world size (m/2), integer part = random phase for traffic
+  const push = (x, y, z, c, s, m = [0, 0, 0, 0]) => {
+    pos.push(x, y, z); col.push(...c); mov.push(...m); size.push(Math.floor(rand() * 500) + s);
+  };
+  const onLand = (x, z) => x < coastX(z) - 40;
+  const X0 = -13 * CELL - 30, X1 = 7 * CELL + 30, Z0 = -30 * CELL - 30, Z1 = 8 * CELL + 30;
+  const lamp = [1.5, 0.9, 0.45], blvd = [2.2, 1.35, 0.7], green = [0.1, 1.9, 0.75], lantern = [2.4, 1.3, 0.55];
+  const step = isMobile ? 36 : 24;
+  for (let gx = -13; gx <= 8; gx++) {
+    const x = gx * CELL - 30;
+    for (let z = Z0; z < Z1; z += step) {
+      if (onLand(x + 6, z)) push(x + 6, 7, z, lamp, 0.45);
+      if (onLand(x - 6, z)) push(x - 6, 7, z + step / 2, lamp, 0.45);
+    }
+  }
+  for (let gz = -30; gz <= 9; gz++) {
+    const z = gz * CELL - 30;
+    for (let x = X0; x < X1; x += step) if (onLand(x, z)) push(x, 7, z + 6, lamp, 0.45);
+  }
+  for (let z = Z0; z < Z1; z += 16) { push(-26, 9, z, blvd, 0.55); push(26, 9, z + 8, blvd, 0.55); }
+  for (let z = TOWER_Z + 30; z < TOWER_Z + 96; z += 6) { push(-9, 0.6, z, blvd, 0.3); push(9, 0.6, z, blvd, 0.3); }
+  for (let z = Z0; z < Z1; z += 14) push(coastX(z) - 26, 6, z, blvd, 0.5);                  // corniche promenade
+  for (const [x, z] of mosqueSpots) push(x + 9, 32, z + 9, green, 0.7);                     // lit minaret tips
+  for (const [x, z] of [[0, 62], [-78, -58], [78, -58], [-78, 58], [78, 58]]) push(GRAND.x + x, x === 0 ? 100 : 55, GRAND.z + z, green, 0.9);
+  for (const d of dhows) push(d.position.x, 5, d.position.z, lantern, 0.6);
+  for (const f of fortLights) push(f[0], f[1], f[2], lantern, 0.7);
+
+  const white = [2.4, 2.2, 1.9], red = [2.2, 0.16, 0.07];
+  const nCars = isMobile ? 450 : 1300;
+  for (let i = 0; i < nCars; i++) {
+    const toward = rand() < 0.5;
+    const speed = 14 + rand() * 14;
+    if (i < nCars * 0.35) {            // boulevard: headlights toward camera, tail-lights away
+      const x = toward ? -6 - rand() * 12 : 6 + rand() * 12;
+      push(x, 0.8, toward ? Z0 : Z1, toward ? white : red, 0.38, [0, toward ? 1 : -1, speed, Z1 - Z0]);
+    } else if (i < nCars * 0.5) {      // corniche road along the sea
+      const x = 400 + (toward ? -3 : 3);
+      push(x, 0.8, toward ? Z0 : Z1, toward ? white : red, 0.34, [0, toward ? 1 : -1, speed, Z1 - Z0]);
+    } else if (rand() < 0.5) {
+      const x = Math.round(rand() * 20 - 13) * CELL - 30 + (toward ? -3 : 3);
+      push(x, 0.8, toward ? Z0 : Z1, toward ? white : red, 0.32, [0, toward ? 1 : -1, speed, Z1 - Z0]);
+    } else {
+      const z = Math.round(rand() * 39 - 30) * CELL - 30 + (toward ? 3 : -3);
+      push(toward ? X0 : X1, 0.8, z, toward ? white : red, 0.32, [toward ? 1 : -1, 0, speed, X1 - X0]);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('aColor', new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute('aMove', new THREE.Float32BufferAttribute(mov, 4));
+  g.setAttribute('aSize', new THREE.Float32BufferAttribute(size, 1));
+  const pts = new THREE.Points(g, lightsMat);
+  pts.frustumCulled = false;
+  scene.add(pts);
+}
+
+
+/* ---------------------------------------------------------
+   The signature tower — twisting floor plates, bronze fins,
+   floors glowing through the screen. Penthouse on level 40.
+   --------------------------------------------------------- */
+const LEVELS = 58, LH = 4.2, HALF = 18.5, TWIST = 0.011, PK = 40, FINS = 15;
+const tower = new THREE.Group();
+tower.position.set(0, 0, TOWER_Z);
+scene.add(tower);
+
+const slabMat = new THREE.MeshStandardMaterial({ color: 0xcfc8bc, roughness: 0.55, metalness: 0.05 });
+const finMat = new THREE.MeshStandardMaterial({ color: 0xc6a168, roughness: 0.42, metalness: 1, envMapIntensity: 1.1 });
+const coreMat = new THREE.MeshStandardMaterial({ color: 0x10141b, roughness: 0.24, metalness: 0.9, envMapIntensity: 0.75 });
+// the low sun sits behind the tower on the boulevard axis: damp its direct glint on the metal and glass
+const dampSunGlint = (sh) => sh.fragmentShader.replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\nreflectedLight.directSpecular *= 0.12;');
+finMat.onBeforeCompile = (sh) => { sh.fragmentShader = dampSunGlint(sh); };
+// instance colour drives the interior glow of each floor instead of tinting the glass
+// and is broken into individual rooms so floors read as lived-in rather than flat panels
+coreMat.onBeforeCompile = (sh) => {
+  sh.vertexShader = 'varying vec3 vWPos;\n' + sh.vertexShader.replace('#include <project_vertex>',
+    '#include <project_vertex>\nvWPos = (modelMatrix * instanceMatrix * vec4(transformed, 1.0)).xyz;');
+  sh.fragmentShader = 'varying vec3 vWPos;\n' + dampSunGlint(sh)
+    .replace('#include <color_fragment>', '')
+    .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      #ifdef USE_COLOR
+        float room = floor((vWPos.x - vWPos.z) / 5.5);
+        float lvl = floor(vWPos.y / 4.2);
+        float rh = fract(sin(room * 12.9898 + lvl * 78.233) * 43758.5453);
+        float fy = fract(vWPos.y / 4.2);
+        totalEmissiveRadiance += vColor.rgb * mix(0.12, 1.35, rh * rh) * (0.65 + 0.6 * smoothstep(0.2, 0.95, fy));
+      #endif`);
+};
+
+{
+  const slabs = new THREE.InstancedMesh(new THREE.BoxGeometry(HALF * 2, 0.5, HALF * 2), slabMat, LEVELS + 1);
+  const cores = new THREE.InstancedMesh(new THREE.BoxGeometry(33.4, LH - 0.5, 33.4), coreMat, LEVELS);
+  const fins = new THREE.InstancedMesh(new THREE.BoxGeometry(0.34, LH, 1.3), finMat, (LEVELS + 3) * FINS * 4);
+  const d = new THREE.Object3D(), c = new THREE.Color(), v = new THREE.Vector3();
+  const open = (i) => i === PK || i === PK + 1;
+  let si = 0, ci = 0, fi = 0;
+  for (let i = 0; i < LEVELS + 3; i++) {
+    const y = i * LH, rot = i * TWIST;
+    d.rotation.set(0, rot, 0);
+    if (i <= LEVELS && i !== PK + 1) { d.position.set(0, y, 0); d.updateMatrix(); slabs.setMatrixAt(si++, d.matrix); }
+    if (i < LEVELS && !open(i)) {
+      d.position.set(0, y + LH / 2, 0); d.updateMatrix(); cores.setMatrixAt(ci, d.matrix);
+      if (i < 2) c.setRGB(0.5, 0.33, 0.18);
+      else if (rand() < 0.6) c.setRGB(1.0, 0.6, 0.3).multiplyScalar(0.1 + Math.pow(rand(), 1.6) * 0.62);
+      else c.setRGB(0.004, 0.005, 0.007);
+      cores.setColorAt(ci++, c);
+    }
+    for (let s = 0; s < 4; s++) {
+      if (open(i) && (s === 0 || s === 3)) continue;        // penthouse: open corner facing the approach
+      for (let j = 0; j < FINS; j++) {
+        const a = -HALF + (j + 0.5) * (2 * HALF / FINS);
+        const side = s % 2 === 1;
+        v.set(side ? (s === 1 ? HALF - 0.3 : -HALF + 0.3) : a, 0, side ? a : (s === 0 ? HALF - 0.3 : -HALF + 0.3));
+        v.applyAxisAngle(UP, rot);
+        d.position.set(v.x, y + LH / 2, v.z);
+        d.rotation.set(0, rot + (side ? Math.PI / 2 : 0), 0);
+        d.updateMatrix();
+        fins.setMatrixAt(fi++, d.matrix);
+      }
+    }
+  }
+  slabs.count = si; cores.count = ci; fins.count = fi;
+  tower.add(slabs, cores, fins);
+
+  // crown light, spire, aviation beacon
+  const top = LEVELS * LH, rot = LEVELS * TWIST;
+  const crownMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.02, 1.5, 0.62) });   // Tamlik green
+  const crown = new THREE.Group(); crown.rotation.y = rot; crown.position.y = top + 0.5;
+  for (let s = 0; s < 4; s++) {
+    const bar = new THREE.Mesh(new THREE.BoxGeometry(HALF * 2, 0.18, 0.18), crownMat);
+    bar.position.set(s < 2 ? 0 : (s === 2 ? HALF - 1 : -HALF + 1), 0, s < 2 ? (s === 0 ? HALF - 1 : -HALF + 1) : 0);
+    if (s >= 2) bar.rotation.y = Math.PI / 2;
+    crown.add(bar);
+  }
+  tower.add(crown);
+  const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.6, 26, 8), finMat);
+  spire.position.y = top + 3 * LH + 13;
+  tower.add(spire);
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(5, 0.25, 0.1) }));
+  beacon.position.y = top + 3 * LH + 26.5;
+  tower.add(beacon);
+  tower.userData.beacon = beacon;
+}
+
+// Plaza + reflecting pool
+{
+  const paving = new THREE.Mesh(new THREE.PlaneGeometry(150, 190), new THREE.MeshStandardMaterial({ color: 0x141418, roughness: 0.75 }));
+  paving.rotation.x = -Math.PI / 2; paving.position.set(0, 0.04, TOWER_Z);
+  const pool = new THREE.Mesh(new THREE.PlaneGeometry(96, 96), new THREE.MeshStandardMaterial({ color: 0x020304, roughness: 0.04, metalness: 1 }));
+  pool.rotation.x = -Math.PI / 2; pool.position.set(0, 0.08, TOWER_Z);
+  const walk = new THREE.Mesh(new THREE.PlaneGeometry(12, 32), new THREE.MeshStandardMaterial({ color: 0x1c1b1f, roughness: 0.6 }));
+  walk.rotation.x = -Math.PI / 2; walk.position.set(0, 0.1, TOWER_Z + 34);
+  scene.add(paving, pool, walk);
+}
+
+// Tamlik monument — the 3D logo standing at the head of the boulevard, on a stone plinth,
+// uplit and glowing green onto the paving so it belongs to the city at dusk
+{
+  const mats = makeLogoMaterials(0.9);
+  mats.green.emissiveIntensity = 0.2;
+  const { root: logo } = buildLogo3D(mats, 90, 12);
+  const S = 78 / 1390, Z = -492;
+  logo.scale.setScalar(S);
+  logo.position.set(0, 2.2 + 197 * S, Z);
+  scene.add(logo);
+  const stone = new THREE.MeshStandardMaterial({ color: 0x2a2622, roughness: 0.55, metalness: 0.1 });
+  const plinth = new THREE.Mesh(new RoundedBoxGeometry(84, 2.2, 10, 3, 0.4), stone);
+  plinth.position.set(0, 1.1, Z); scene.add(plinth);
+  const strip = new THREE.Mesh(new THREE.BoxGeometry(80, 0.4, 0.3), new THREE.MeshBasicMaterial({ color: new THREE.Color(0.06, 1.1, 0.45) }));
+  strip.position.set(0, 2.25, Z + 5.05); scene.add(strip);
+  // soft green pool of light on the paving
+  const gcv = document.createElement('canvas'); gcv.width = gcv.height = 256;
+  const gctx = gcv.getContext('2d'), grd = gctx.createRadialGradient(128, 128, 0, 128, 128, 128);
+  grd.addColorStop(0, 'rgba(40,255,140,0.55)'); grd.addColorStop(1, 'rgba(40,255,140,0)');
+  gctx.fillStyle = grd; gctx.fillRect(0, 0, 256, 256);
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(130, 60), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(gcv), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0.5 }));
+  glow.rotation.x = -Math.PI / 2; glow.position.set(0, 0.35, Z + 8); scene.add(glow);
+  const up = new THREE.PointLight(0x3dff9a, 900, 70, 1.6); up.position.set(0, 3, Z + 16); scene.add(up);
+  const warmUp = new THREE.PointLight(0xffb070, 500, 60, 1.6); warmUp.position.set(0, 26, Z + 22); scene.add(warmUp);
+}
+
+/* ---------------------------------------------------------
+   Penthouse interior (local space of level PK, floor at y=0.25)
+   Travertine floor, walnut logo wall, majlis-inspired lounge,
+   dining, kitchen island, mashrabiya screen, sheer curtains.
+   --------------------------------------------------------- */
+const pent = new THREE.Group();
+pent.position.y = PK * LH;
+pent.rotation.y = PK * TWIST;
+tower.add(pent);
+{
+  const F = 0.25, CEIL = 8.15;
+  const canvasTex = (w, h, draw, repeat = [1, 1], srgb = true) => {
+    const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+    draw(cv.getContext('2d'), w, h);
+    const t = new THREE.CanvasTexture(cv);
+    if (srgb) t.colorSpace = THREE.SRGBColorSpace;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...repeat);
+    t.anisotropy = renderer.capabilities.getMaxAnisotropy();
+    return t;
+  };
+  const noiseFill = (ctx, w, h, base, amt, n = 9000) => {
+    ctx.fillStyle = base; ctx.fillRect(0, 0, w, h);
+    for (let i = 0; i < n; i++) { ctx.fillStyle = `rgba(${rand() < 0.5 ? '255,255,255' : '0,0,0'},${rand() * amt})`; ctx.fillRect(rand() * w, rand() * h, 1 + rand() * 3, 1 + rand() * 3); }
+  };
+
+  // --- textures ---------------------------------------------------------------
+  const travTex = canvasTex(1024, 1024, (ctx, w, h) => {
+    noiseFill(ctx, w, h, '#cdbfa8', 0.05, 30000);
+    for (let i = 0; i < 70; i++) {                                    // travertine veining
+      ctx.strokeStyle = `rgba(150,128,100,${0.08 + rand() * 0.12})`; ctx.lineWidth = 1 + rand() * 3;
+      ctx.beginPath(); let x = 0, y = rand() * h; ctx.moveTo(x, y);
+      while (x < w) { x += 20 + rand() * 40; y += (rand() - 0.5) * 14; ctx.lineTo(x, y); }
+      ctx.stroke();
+    }
+    ctx.strokeStyle = 'rgba(90,75,60,0.55)'; ctx.lineWidth = 2;        // tile joints
+    for (let k = 0; k <= 4; k++) { ctx.beginPath(); ctx.moveTo(k * w / 4, 0); ctx.lineTo(k * w / 4, h); ctx.moveTo(0, k * h / 4); ctx.lineTo(w, k * h / 4); ctx.stroke(); }
+  }, [4, 4]);
+  const walnutTex = canvasTex(512, 512, (ctx, w, h) => {
+    noiseFill(ctx, w, h, '#4a2e1c', 0.06, 8000);
+    for (let x = 0; x < w; x += 32) {
+      const g = ctx.createLinearGradient(x, 0, x + 26, 0);
+      g.addColorStop(0, '#3a2213'); g.addColorStop(0.5, '#5a3822'); g.addColorStop(1, '#3a2213');
+      ctx.fillStyle = g; ctx.fillRect(x, 0, 26, h);
+      for (let i = 0; i < 14; i++) { ctx.strokeStyle = `rgba(30,16,8,${rand() * 0.3})`; ctx.beginPath(); const gx = x + rand() * 26; ctx.moveTo(gx, 0); ctx.bezierCurveTo(gx + 4, h * 0.3, gx - 4, h * 0.6, gx + 2, h); ctx.stroke(); }
+      ctx.fillStyle = '#140a05'; ctx.fillRect(x + 26, 0, 6, h);
+    }
+  }, [3, 1]);
+  const rugTex = canvasTex(1024, 704, (ctx, w, h) => {                 // Omani / Persian-inspired rug
+    ctx.fillStyle = '#5a1a18'; ctx.fillRect(0, 0, w, h);
+    const band = (inset, color, width) => { ctx.strokeStyle = color; ctx.lineWidth = width; ctx.strokeRect(inset, inset, w - inset * 2, h - inset * 2); };
+    band(18, '#d8c7a3', 14); band(46, '#1f2a44', 30); band(78, '#c9a36a', 6);
+    for (let x = 60; x < w - 40; x += 32) { ctx.fillStyle = '#c9a36a'; ctx.beginPath(); ctx.moveTo(x, 46); ctx.lineTo(x + 10, 36); ctx.lineTo(x + 20, 46); ctx.lineTo(x + 10, 56); ctx.fill(); ctx.beginPath(); ctx.moveTo(x, h - 46); ctx.lineTo(x + 10, h - 36); ctx.lineTo(x + 20, h - 46); ctx.lineTo(x + 10, h - 56); ctx.fill(); }
+    ctx.strokeStyle = 'rgba(216,199,163,0.35)'; ctx.lineWidth = 2;
+    for (let x = 110; x < w - 90; x += 48) for (let y = 110; y < h - 90; y += 48) { ctx.beginPath(); ctx.moveTo(x, y - 14); ctx.lineTo(x + 14, y); ctx.lineTo(x, y + 14); ctx.lineTo(x - 14, y); ctx.closePath(); ctx.stroke(); }
+    const cx = w / 2, cy = h / 2;
+    for (const [r, c] of [[210, '#1f2a44'], [170, '#d8c7a3'], [150, '#7a2622'], [96, '#c9a36a'], [58, '#1f2a44']]) {
+      ctx.fillStyle = c; ctx.beginPath();
+      for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, rr = k % 2 ? r * 0.72 : r; ctx.lineTo(cx + Math.cos(a) * rr * 1.25, cy + Math.sin(a) * rr * 0.8); }
+      ctx.fill();
+    }
+    for (let i = 0; i < 26000; i++) { ctx.fillStyle = `rgba(0,0,0,${rand() * 0.12})`; ctx.fillRect(rand() * w, rand() * h, 2, 2); }
+  });
+  const latticeTex = canvasTex(256, 256, (ctx, w, h) => {              // mashrabiya: eight-point star lattice
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 11; ctx.lineJoin = 'miter';
+    const star = (cx, cy, r) => { ctx.beginPath(); for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2 + Math.PI / 16, rr = k % 2 ? r * 0.62 : r; ctx.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); } ctx.closePath(); ctx.stroke(); };
+    for (const [x, y] of [[0, 0], [w, 0], [0, h], [w, h], [w / 2, h / 2]]) star(x, y, w * 0.34);
+    ctx.lineWidth = 9; ctx.strokeRect(0, 0, w, h);
+  }, [5, 2], false);
+  const artTex = canvasTex(1024, 640, (ctx, w, h) => {                 // painting: Hajar ridges over desert dunes
+    const sky = ctx.createLinearGradient(0, 0, 0, h);
+    sky.addColorStop(0, '#2b2238'); sky.addColorStop(0.5, '#c86a3a'); sky.addColorStop(1, '#e8b27a');
+    ctx.fillStyle = sky; ctx.fillRect(0, 0, w, h);
+    const layer = (y0, amp, freq, color, seed) => { ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(0, h); for (let x = 0; x <= w; x += 8) ctx.lineTo(x, y0 + Math.sin(x * freq + seed) * amp + Math.sin(x * freq * 2.7 + seed * 2) * amp * 0.35); ctx.lineTo(w, h); ctx.fill(); };
+    layer(h * 0.45, 40, 0.012, '#5b3a4a', 1); layer(h * 0.56, 34, 0.009, '#7b4636', 2);
+    layer(h * 0.7, 22, 0.006, '#b56b3e', 3); layer(h * 0.82, 16, 0.005, '#d99a5c', 4);
+    ctx.fillStyle = 'rgba(255,230,190,0.9)'; ctx.beginPath(); ctx.arc(w * 0.68, h * 0.38, 36, 0, Math.PI * 2); ctx.fill();
+    for (let i = 0; i < 20000; i++) { ctx.fillStyle = `rgba(0,0,0,${rand() * 0.08})`; ctx.fillRect(rand() * w, rand() * h, 2, 2); }
+  });
+  const blobTex = canvasTex(128, 128, (ctx, w, h) => {
+    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    g.addColorStop(0, 'rgba(0,0,0,0.75)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  }, [1, 1], false);
+  const haloTex = canvasTex(256, 128, (ctx, w, h) => {
+    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, w, h);
+  }, [1, 1], false);
+
+  // --- materials -------------------------------------------------------------
+  const M = (o) => new THREE.MeshStandardMaterial({ roughness: 0.8, ...o });
+  const travertine = M({ map: travTex, roughness: 0.48, envMapIntensity: 0.45 });
+  const marble = M({ color: 0xece6dc, roughness: 0.22 });
+  const walnut = M({ map: walnutTex, roughness: 0.55 });
+  const darkWood = M({ color: 0x2b1a10, roughness: 0.5 });
+  const linen = M({ color: 0xd8cfbf, roughness: 0.95 });
+  const linenDark = M({ color: 0xb9ab95, roughness: 0.95 });
+  const velvetGreen = M({ color: 0x0d5a36, roughness: 0.75 });          // Tamlik green accents
+  const terracotta = M({ color: 0x9a4a2a, roughness: 0.9 });
+  const brass = M({ color: 0xc9a060, roughness: 0.28, metalness: 1 });
+  const blackMetal = M({ color: 0x111111, roughness: 0.4, metalness: 0.8 });
+  const leaf = M({ color: 0x2f4a26, roughness: 0.85, side: THREE.DoubleSide });
+  const lampGlow = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.0, 1.35, 0.8) });
+
+  const rbox = (w, h, d, r, mat, x, y, z, ry = 0) => {
+    const m = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 3, Math.min(r, w / 2, h / 2, d / 2)), mat);
+    m.position.set(x, y, z); m.rotation.y = ry; m.castShadow = m.receiveShadow = true; pent.add(m); return m;
+  };
+  const mesh = (geo, mat, x, y, z, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = shadow; m.receiveShadow = true; pent.add(m); return m; };
+  const blob = (w, d, x, z, o = 0.6) => {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, opacity: o, depthWrite: false }));
+    m.rotation.x = -Math.PI / 2; m.position.set(x, F + 0.025, z); pent.add(m);
+  };
+
+  // --- shell -----------------------------------------------------------------
+  const floor = new THREE.Mesh(new THREE.PlaneGeometry(36.6, 36.6), travertine);
+  floor.rotation.x = -Math.PI / 2; floor.position.y = F + 0.01; floor.receiveShadow = true; pent.add(floor);
+  // ceiling: recessed downlights + perimeter cove
+  const downGeo = new THREE.CircleGeometry(0.16, 20);
+  for (let x = -14; x <= 14; x += 4) for (let z = -14; z <= 14; z += 4) {
+    const d = new THREE.Mesh(downGeo, lampGlow); d.rotation.x = Math.PI / 2; d.position.set(x, CEIL - 0.01, z); pent.add(d);
+  }
+  const cove = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.9, 0.6, 0.36) });
+  mesh(new THREE.BoxGeometry(34, 0.04, 0.1), cove, 0, CEIL - 0.02, -16.8, false);
+  mesh(new THREE.BoxGeometry(0.1, 0.04, 34), cove, 16.8, CEIL - 0.02, 0, false);
+
+  // --- logo wall: walnut-clad core with the Tamlik logo in 3D -----------------
+  const coreW = 9, coreD = 6, coreX = 9, coreZ = -7;
+  const core = new THREE.Mesh(new THREE.BoxGeometry(coreW, CEIL - F, coreD), [travertine, travertine, travertine, travertine, walnut, travertine]);
+  core.position.set(coreX, F + (CEIL - F) / 2, coreZ); core.receiveShadow = true; pent.add(core);
+  const faceZ = coreZ + coreD / 2;
+  {
+    const wallMats = makeLogoMaterials(1.3);
+    wallMats.green.emissiveIntensity = 0.2;
+    const { root: logo } = buildLogo3D(wallMats, 60, 8);
+    logo.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+    logo.scale.setScalar(6.6 / 1390);
+    logo.position.set(coreX, F + 4.42, faceZ + 0.3);
+    pent.add(logo);
+    const logoLight = new THREE.PointLight(0x3dff9a, 1.6, 6, 2); logoLight.position.set(coreX, F + 4.4, faceZ + 0.9); pent.add(logoLight);
+  }
+  // brass reveal lines framing the walnut
+  mesh(new THREE.BoxGeometry(0.05, CEIL - F, 0.05), brass, coreX - coreW / 2 + 0.03, F + (CEIL - F) / 2, faceZ + 0.03, false);
+  mesh(new THREE.BoxGeometry(0.05, CEIL - F, 0.05), brass, coreX + coreW / 2 - 0.03, F + (CEIL - F) / 2, faceZ + 0.03, false);
+
+  // painting + sideboard on the core's lounge-facing side
+  const artX = coreX - coreW / 2 - 0.04;
+  const art = mesh(new THREE.PlaneGeometry(4.6, 2.9), M({ map: artTex, roughness: 0.9 }), artX - 0.02, F + 3.9, coreZ, false);
+  art.rotation.y = -Math.PI / 2;
+  mesh(new THREE.BoxGeometry(0.08, 3.05, 4.75), brass, artX, F + 3.9, coreZ, false);
+  rbox(0.55, 0.75, 5.2, 0.04, walnut, artX - 0.32, F + 0.375, coreZ);
+  mesh(new THREE.LatheGeometry([[0, 0], [0.18, 0.02], [0.24, 0.3], [0.1, 0.62], [0.13, 0.7]].map(([a, b]) => new THREE.Vector2(a, b)), 24), terracotta, artX - 0.35, F + 0.75, coreZ - 1.6);
+
+  // --- lounge (majlis-inspired, facing the view) ------------------------------
+  const LX = -3, LZ = -7;
+  rbox(7.6, 0.42, 2.3, 0.12, linen, LX, F + 0.21, LZ + 0.9);                       // sofa base
+  for (let k = 0; k < 3; k++) rbox(2.4, 0.26, 1.9, 0.12, linen, LX - 2.45 + k * 2.45, F + 0.55, LZ + 0.75);   // seat cushions
+  rbox(7.6, 0.8, 0.45, 0.16, linen, LX, F + 0.8, LZ + 1.85);                        // back
+  rbox(0.45, 0.62, 2.3, 0.16, linen, LX - 3.95, F + 0.52, LZ + 0.9);
+  rbox(0.45, 0.62, 2.3, 0.16, linen, LX + 3.95, F + 0.52, LZ + 0.9);
+  rbox(2.3, 0.42, 3.6, 0.12, linen, LX - 5.0, F + 0.21, LZ - 0.9);                  // chaise return
+  rbox(2.1, 0.26, 3.4, 0.12, linen, LX - 5.0, F + 0.55, LZ - 0.9);
+  [[-2.8, velvetGreen], [-1.6, linenDark], [1.5, terracotta], [2.7, velvetGreen]].forEach(([x, m]) => {
+    const p = rbox(0.75, 0.62, 0.22, 0.1, m, LX + x, F + 0.95, LZ + 1.45); p.rotation.x = -0.25;
+  });
+  blob(9.5, 4.2, LX - 0.6, LZ + 0.4, 0.45);
+  const rug = new THREE.Mesh(new THREE.PlaneGeometry(9, 6.2), M({ map: rugTex, roughness: 1 }));
+  rug.rotation.x = -Math.PI / 2; rug.rotation.z = Math.PI / 2; rug.position.set(LX, F + 0.02, LZ - 2.6); rug.receiveShadow = true; pent.add(rug);
+  // round travertine coffee table on a brass plinth, with a dallah coffee set
+  mesh(new THREE.CylinderGeometry(1.1, 1.1, 0.1, 48), marble, LX, F + 0.44, LZ - 2.8);
+  mesh(new THREE.CylinderGeometry(0.6, 0.7, 0.4, 32), brass, LX, F + 0.2, LZ - 2.8);
+  const dallah = mesh(new THREE.LatheGeometry([[0, 0], [0.13, 0], [0.15, 0.05], [0.1, 0.17], [0.05, 0.22], [0.07, 0.3], [0.05, 0.37], [0.02, 0.42], [0, 0.44]].map(([a, b]) => new THREE.Vector2(a * 1.4, b * 1.4)), 28), brass, LX + 0.2, F + 0.49, LZ - 2.7);
+  const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.03, 0.34, 8), brass); spout.position.set(0.2, 0.3, 0); spout.rotation.z = -0.9; dallah.add(spout);
+  for (let k = 0; k < 4; k++) mesh(new THREE.CylinderGeometry(0.045, 0.035, 0.07, 16), marble, LX - 0.35 + (k % 2) * 0.16, F + 0.525, LZ - 2.95 + Math.floor(k / 2) * 0.18);
+  mesh(new THREE.CylinderGeometry(0.3, 0.26, 0.05, 32), darkWood, LX - 0.45, F + 0.515, LZ - 2.55);                // tray of dates
+  for (let k = 0; k < 9; k++) mesh(new THREE.SphereGeometry(0.035, 8, 6), M({ color: 0x3a1a0c, roughness: 0.4 }), LX - 0.45 + Math.cos(k) * 0.14 * (k % 3) / 2, F + 0.555, LZ - 2.55 + Math.sin(k) * 0.14 * (k % 3) / 2, false);
+  // lounge chairs
+  for (const [x, ry] of [[LX - 4.2, 0.7], [LX + 3.4, -0.7]]) {
+    const g = new THREE.Group(); g.position.set(x, F, LZ - 4.6); g.rotation.y = ry; pent.add(g);
+    const part = (w, h, d, r, m, px, py, pz) => { const o = new THREE.Mesh(new RoundedBoxGeometry(w, h, d, 3, r), m); o.position.set(px, py, pz); o.castShadow = o.receiveShadow = true; g.add(o); };
+    part(1.2, 0.36, 1.1, 0.14, velvetGreen, 0, 0.42, 0); part(1.2, 0.75, 0.25, 0.12, velvetGreen, 0, 0.8, -0.48);
+    part(0.2, 0.3, 1.0, 0.08, velvetGreen, -0.62, 0.62, 0); part(0.2, 0.3, 1.0, 0.08, velvetGreen, 0.62, 0.62, 0);
+    for (const [lx, lz] of [[-0.5, -0.45], [0.5, -0.45], [-0.5, 0.45], [0.5, 0.45]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.25, 8), brass); l.position.set(lx, 0.12, lz); g.add(l); }
+    blob(1.9, 1.9, x, LZ - 4.6, 0.5);
+  }
+  // arched floor lamp
+  {
+    const curve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(LX - 6.2, F, LZ + 1.8), new THREE.Vector3(LX - 6.2, F + 3.6, LZ + 0.8), new THREE.Vector3(LX - 4.2, F + 2.7, LZ - 1.2));
+    mesh(new THREE.TubeGeometry(curve, 32, 0.035, 8), brass, 0, 0, 0);
+    mesh(new THREE.CylinderGeometry(0.28, 0.3, 0.06, 24), marble, LX - 6.2, F + 0.03, LZ + 1.8);
+    const shade = mesh(new THREE.SphereGeometry(0.34, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2), brass, LX - 4.2, F + 2.55, LZ - 1.2);
+    shade.material = M({ color: 0xc9a060, roughness: 0.3, metalness: 1, side: THREE.DoubleSide });
+    mesh(new THREE.SphereGeometry(0.1, 12, 8), lampGlow, LX - 4.2, F + 2.52, LZ - 1.2, false);
+  }
+  // side table with incense burner (mabkhara)
+  mesh(new THREE.CylinderGeometry(0.35, 0.35, 0.55, 24), marble, LX + 4.6, F + 0.275, LZ + 0.4);
+  mesh(new THREE.LatheGeometry([[0, 0], [0.09, 0], [0.06, 0.1], [0.12, 0.2], [0.13, 0.26], [0, 0.26]].map(([a, b]) => new THREE.Vector2(a, b)), 16), brass, LX + 4.6, F + 0.55, LZ + 0.4);
+
+  // --- mashrabiya screen between lounge and dining -----------------------------
+  {
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(8.5, 3.6), M({ color: 0x8a6436, metalness: 0.7, roughness: 0.45, alphaMap: latticeTex, alphaTest: 0.5, side: THREE.DoubleSide }));
+    scr.position.set(-12.9, F + 1.9, 2.2); scr.castShadow = true; pent.add(scr);
+    mesh(new THREE.BoxGeometry(8.6, 0.08, 0.12), brass, -12.9, F + 3.72, 2.2, false);
+  }
+
+  // --- dining ------------------------------------------------------------------
+  const DX = -10, DZ = 9.5;
+  rbox(6.2, 0.1, 2.0, 0.04, walnut, DX, F + 0.78, DZ);
+  rbox(0.25, 0.73, 1.4, 0.05, darkWood, DX - 2.4, F + 0.365, DZ);
+  rbox(0.25, 0.73, 1.4, 0.05, darkWood, DX + 2.4, F + 0.365, DZ);
+  for (let k = 0; k < 8; k++) {
+    const side = k < 4 ? -1 : 1, x = DX - 2.1 + (k % 4) * 1.4;
+    const g = new THREE.Group(); g.position.set(x, F, DZ + side * 1.35); g.rotation.y = side > 0 ? Math.PI : 0; pent.add(g);
+    const seat = new THREE.Mesh(new RoundedBoxGeometry(0.62, 0.12, 0.6, 2, 0.05), linenDark); seat.position.y = 0.48; seat.castShadow = true; g.add(seat);
+    const back = new THREE.Mesh(new RoundedBoxGeometry(0.62, 0.62, 0.08, 2, 0.04), darkWood); back.position.set(0, 0.85, -0.28); back.castShadow = true; g.add(back);
+    for (const [lx, lz] of [[-0.26, -0.24], [0.26, -0.24], [-0.26, 0.24], [0.26, 0.24]]) { const l = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.02, 0.46, 6), darkWood); l.position.set(lx, 0.23, lz); g.add(l); }
+  }
+  blob(7.5, 4.2, DX, DZ, 0.55);
+  for (let k = 0; k < 3; k++) mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.3 + k * 0.08, 16), brass, DX - 0.4 + k * 0.4, F + 0.98 + k * 0.04, DZ, false);   // candlesticks
+  const globe = new THREE.MeshPhysicalMaterial({ color: 0xfff1dd, emissive: 0xffc98a, emissiveIntensity: 1.4, roughness: 0.2, transmission: 0 });
+  for (let k = 0; k < 7; k++) {
+    const x = DX - 2.4 + k * 0.8, y = 5.0 + Math.sin(k * 1.7) * 0.5, z = DZ + Math.cos(k * 2.3) * 0.3;
+    mesh(new THREE.SphereGeometry(0.24, 24, 16), globe, x, y, z, false);
+    mesh(new THREE.CylinderGeometry(0.008, 0.008, CEIL - y), blackMetal, x, (CEIL + y) / 2, z, false);
+  }
+
+  // --- kitchen island + bar stools -------------------------------------------
+  const KX = 10.5, KZ = 7;
+  rbox(1.5, 1.0, 5.6, 0.04, walnut, KX, F + 0.5, KZ);
+  rbox(1.8, 0.08, 6.0, 0.03, marble, KX, F + 1.04, KZ);
+  for (let k = 0; k < 3; k++) {
+    const z = KZ - 1.8 + k * 1.8;
+    mesh(new THREE.CylinderGeometry(0.28, 0.26, 0.1, 24), velvetGreen, KX - 1.35, F + 0.8, z);
+    mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.75, 8), brass, KX - 1.35, F + 0.38, z);
+    mesh(new THREE.TorusGeometry(0.2, 0.012, 6, 24), brass, KX - 1.35, F + 0.3, z).rotation.x = Math.PI / 2;
+  }
+  mesh(new THREE.SphereGeometry(0.28, 20, 12), M({ color: 0xc6b18a, roughness: 0.6 }), KX, F + 1.2, KZ + 1.6);   // bowl
+  for (let k = 0; k < 3; k++) {
+    const z = KZ - 1.8 + k * 1.8;
+    mesh(new THREE.ConeGeometry(0.28, 0.38, 24, 1, true), M({ color: 0x0d5a36, roughness: 0.5, side: THREE.DoubleSide }), KX, 4.3, z, false);
+    mesh(new THREE.SphereGeometry(0.09, 12, 8), lampGlow, KX, 4.13, z, false);
+    mesh(new THREE.CylinderGeometry(0.006, 0.006, CEIL - 4.4), blackMetal, KX, (CEIL + 4.4) / 2, z, false);
+  }
+  blob(3, 6.6, KX - 0.5, KZ, 0.5);
+
+  // --- greenery: a potted date palm and olive trees -------------------------------
+  const potted = (x, z) => {
+    mesh(new THREE.CylinderGeometry(0.75, 0.6, 1.1, 32), terracotta, x, F + 0.55, z);
+    const t = new THREE.Mesh(PALM.trunk, palmTrunkMat), c = new THREE.Mesh(PALM.crown, M({ color: 0x3f5f30, roughness: 0.8, side: THREE.DoubleSide }));
+    for (const o of [t, c]) { o.scale.setScalar(0.38); o.position.set(x, F + 1.05, z); o.castShadow = true; pent.add(o); }
+  };
+  potted(15, 15); potted(15.5, -15.5);
+  const olive = (x, z) => {
+    mesh(new THREE.CylinderGeometry(0.6, 0.5, 0.9, 28), M({ color: 0xd8cfc0, roughness: 0.5 }), x, F + 0.45, z);
+    mesh(new THREE.CylinderGeometry(0.06, 0.1, 1.6, 8), darkWood, x, F + 1.7, z);
+    for (let k = 0; k < 7; k++) {
+      const g = new THREE.IcosahedronGeometry(0.55 + rand() * 0.3, 1);
+      const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setXYZ(i, p.getX(i) * (0.85 + rand() * 0.3), p.getY(i) * (0.85 + rand() * 0.3), p.getZ(i) * (0.85 + rand() * 0.3));
+      g.computeVertexNormals();
+      mesh(g, M({ color: 0x55653d, roughness: 0.9, flatShading: true }), x + (rand() - 0.5) * 1.1, F + 2.6 + rand() * 0.8, z + (rand() - 0.5) * 1.1);
+    }
+  };
+  olive(-15.5, -15.5); olive(-15.8, 14.8);
+
+  // --- sheer curtains, gathered in panels at the back and side ---------------------
+  {
+    const curtainMat = M({ color: 0xf1e8da, roughness: 1, transparent: true, opacity: 0.42, side: THREE.DoubleSide, depthWrite: false });
+    const panel = (len, x, z, ry) => {
+      const g = new THREE.PlaneGeometry(len, CEIL - F - 0.1, Math.round(len * 10), 1);
+      const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * 6.3) * 0.09);
+      g.computeVertexNormals();
+      const m = new THREE.Mesh(g, curtainMat); m.position.set(x, F + (CEIL - F) / 2, z); m.rotation.y = ry; pent.add(m);
+    };
+    panel(6, -13.5, -17.3, 0); panel(5, 14, -17.3, 0);
+    panel(6, 17.3, -13.5, -Math.PI / 2); panel(6, 17.3, 13.5, -Math.PI / 2);
+  }
+
+  // glass balustrade along the open corner
+  const glass = new THREE.MeshStandardMaterial({ color: 0x9fb4c8, roughness: 0.05, metalness: 0.2, transparent: true, opacity: 0.12, depthWrite: false });
+  mesh(new THREE.BoxGeometry(36.6, 1.1, 0.04), glass, 0, F + 0.55, HALF + 0.05, false);
+  mesh(new THREE.BoxGeometry(0.04, 1.1, 36.6), glass, -HALF - 0.05, F + 0.55, 0, false);
+  mesh(new THREE.BoxGeometry(36.6, 0.05, 0.08), brass, 0, F + 1.12, HALF + 0.05, false);
+  mesh(new THREE.BoxGeometry(0.08, 0.05, 36.6), brass, -HALF - 0.05, F + 1.12, 0, false);
+
+  // --- lighting: warm key with soft shadows over the lounge, practical fills --------
+  const key = new THREE.SpotLight(0xffc690, 55, 24, 0.95, 0.85, 1.6);
+  key.position.set(LX + 1, CEIL - 0.3, LZ - 1); key.target.position.set(LX, 0, LZ - 2);
+  key.castShadow = true; key.shadow.mapSize.set(isMobile ? 1024 : 2048, isMobile ? 1024 : 2048);
+  key.shadow.bias = -0.0004; key.shadow.normalBias = 0.02; key.shadow.radius = 6;
+  key.shadow.camera.near = 0.5; key.shadow.camera.far = 14;
+  pent.add(key, key.target);
+  const dine = new THREE.SpotLight(0xffc088, 40, 16, 0.8, 0.9, 1.6);
+  dine.position.set(DX, CEIL - 0.3, DZ); dine.target.position.set(DX, 0, DZ);
+  pent.add(dine, dine.target);
+  const l1 = new THREE.PointLight(0xffb27a, 16, 26, 2); l1.position.set(-3, 3.6, -5); pent.add(l1);
+  const l2 = new THREE.PointLight(0xffa868, 12, 20, 2); l2.position.set(4, 3.4, 8); pent.add(l2);
+}
+
+scene.updateMatrixWorld(true);
+
+/* ---------------------------------------------------------
+   Camera choreography — keyframes along one continuous spline
+   --------------------------------------------------------- */
+const W = (x, y, z) => new THREE.Vector3(x, y, z);
+const L = (x, y, z) => pent.localToWorld(new THREE.Vector3(x, y, z));
+const KEYS = [
+  { t: 0.00, p: W(150, 430, 780),    l: W(0, 70, -520),     fov: 42 },  // aerial establishing
+  { t: 0.10, p: W(0, 195, 390),      l: W(0, 95, -600),     fov: 44 },  // descend onto the axis
+  { t: 0.22, p: W(0, 38, 90),        l: W(0, 70, -600),     fov: 48 },  // skim the boulevard
+  { t: 0.34, p: W(-16, 26, -390),    l: W(0, 150, -600),    fov: 54, roll: 0.03 },  // look up at the tower
+  { t: 0.45, p: W(-30, 112, -505),   l: W(0, 150, -600),    fov: 50, roll: -0.02 }, // rise along the facade
+  { t: 0.55, p: L(2, 4.6, 46),       l: L(5, 4.2, 0),       fov: 48 },  // hold at the penthouse threshold
+  { t: 0.64, p: L(2, 3.5, 10),       l: L(3, 3.4, -20),     fov: 56 },  // step inside
+  { t: 0.74, p: L(-6, 3.2, 0),       l: L(-40, 1.5, -45),   fov: 58, roll: 0.015 }, // turn to the view
+  { t: 0.82, p: L(-44, 7, -28),      l: L(-110, -12, -75),  fov: 54, roll: -0.03 }, // glide out the open corner
+  { t: 0.90, p: W(455, 72, -995),    l: W(575, 58, -1160),  fov: 46 },  // sweep down to the sea and the fort
+  { t: 1.00, p: W(-150, 330, 90),    l: W(-95, 80, -700),   fov: 46 },  // closing aerial
+];
+const N = KEYS.length;
+const posCurve = new THREE.CatmullRomCurve3(KEYS.map(k => k.p), false, 'centripetal');
+{
+  const m = new THREE.Matrix4(), z = new THREE.Vector3(0, 0, 1);
+  for (const k of KEYS) {
+    k.q = new THREE.Quaternion().setFromRotationMatrix(m.lookAt(k.p, k.l, UP));
+    if (k.roll) k.q.multiply(new THREE.Quaternion().setFromAxisAngle(z, k.roll));
+  }
+}
+const shot = { pos: new THREE.Vector3(), q: new THREE.Quaternion(), fov: 45 };
+function sampleShot(p) {
+  p = clamp(p, 0, 1);
+  let i = 0;
+  while (i < N - 2 && p > KEYS[i + 1].t) i++;
+  let f = clamp((p - KEYS[i].t) / (KEYS[i + 1].t - KEYS[i].t), 0, 1);
+  const e = f * f * (3 - 2 * f);
+  f = f * 0.5 + e * 0.5;                         // gentle ease-in/out around each key
+  posCurve.getPoint((i + f) / (N - 1), shot.pos);
+  shot.q.slerpQuaternions(KEYS[i].q, KEYS[i + 1].q, f);
+  shot.fov = lerp(KEYS[i].fov, KEYS[i + 1].fov, e);
+  return shot;
+}
+
+/* ---------------------------------------------------------
+   Post-processing — bloom, then a filmic finish (vignette,
+   subtle lens fringing, grain)
+   --------------------------------------------------------- */
+const rt = new THREE.WebGLRenderTarget(innerWidth * DPR, innerHeight * DPR, { type: THREE.HalfFloatType, samples: isMobile ? 0 : 4 });
+const composer = new EffectComposer(renderer, rt);
+composer.setPixelRatio(DPR);
+composer.setSize(innerWidth, innerHeight);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.55, 0.45, 0.9);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+const finish = new ShaderPass({
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uCA: { value: 0.006 }, uVig: { value: 0.5 } },
+  vertexShader: /* glsl */`varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: /* glsl */`
+    uniform sampler2D tDiffuse; uniform float uTime; uniform float uCA; uniform float uVig;
+    varying vec2 vUv;
+    void main(){
+      vec2 c = vUv - 0.5;
+      float d = dot(c, c);
+      vec2 off = c * d * uCA;
+      vec3 col = vec3(texture2D(tDiffuse, vUv + off).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - off).b);
+      col *= mix(1.0, 1.0 - uVig, smoothstep(0.08, 0.55, d * 1.5));
+      float g = fract(sin(dot(gl_FragCoord.xy + fract(uTime * 7.13) * 400.0, vec2(12.9898, 78.233))) * 43758.5453);
+      col += (g - 0.5) * 0.016;
+      gl_FragColor = vec4(col, 1.0);
+    }`
+});
+composer.addPass(finish);
+
+
+/* ---------------------------------------------------------
+   Resize, 3D logo, frame loop, autoplay director
+   --------------------------------------------------------- */
+gsap.ticker.lagSmoothing(0);
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  composer.setSize(innerWidth, innerHeight);
+  setPointScale();
+});
+function setPointScale() {
+  lightsMat.uniforms.uScale.value = (innerHeight * DPR * 0.5) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+}
+
+/* ---------------------------------------------------------
+   3D logo stage — its own small renderer, studio-lit, drawn into
+   the loader, the navigation bar and the closing card
+   --------------------------------------------------------- */
+const logoRig = (() => {
+  const W = 1400, H = 480;
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const r = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true });
+  r.setPixelRatio(1); r.setSize(W, H, false);
+  r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.0;
+  const sc = new THREE.Scene();
+  const pm = new THREE.PMREMGenerator(r);
+  sc.environment = pm.fromScene(new RoomEnvironment(), 0.03).texture;
+  sc.environmentIntensity = 0.7;
+  pm.dispose();
+  const cam = new THREE.PerspectiveCamera(22, W / H, 0.1, 100); cam.position.set(0, 1.6, 12); cam.lookAt(0, 0.1, 0);
+  const key = new THREE.DirectionalLight(0xffffff, 2.4); key.position.set(3, 5, 8);
+  const warm = new THREE.DirectionalLight(0xffc48a, 1.4); warm.position.set(-7, 2, 4);
+  const rim = new THREE.DirectionalLight(0x3dff9a, 2.2); rim.position.set(0, -2, -7);
+  const sweep = new THREE.PointLight(0xffffff, 0, 14, 1.4); sweep.position.set(-9, 1.2, 2.6);
+  sc.add(key, warm, rim, sweep);
+  const { root, parts } = buildLogo3D(makeLogoMaterials(1.1));
+  root.scale.setScalar(10 / 1390);
+  const holder = new THREE.Group(); holder.add(root); sc.add(holder);
+  const anim = { l: 1, r: 1, w: 1, sweep: 1 };
+  const v = new THREE.Vector3();
+
+  function pose(t, mode) {
+    const L = parts['roof-left'], R = parts['roof-right'], Wd = parts['wordmark'];
+    const l = anim.l, rr = anim.r, w = anim.w;
+    L.position.copy(L.userData.base).add(v.set(-520 * (1 - l), 300 * (1 - l), 420 * (1 - l)));
+    L.rotation.set(0.4 * (1 - l), -1.3 * (1 - l), 0.6 * (1 - l));
+    L.visible = l > 0.001;
+    R.position.copy(R.userData.base).add(v.set(520 * (1 - rr), 300 * (1 - rr), 420 * (1 - rr)));
+    R.rotation.set(0.4 * (1 - rr), 1.3 * (1 - rr), -0.6 * (1 - rr));
+    R.visible = rr > 0.001;
+    Wd.position.copy(Wd.userData.base).add(v.set(0, -160 * (1 - w), -200 * (1 - w)));
+    Wd.rotation.set(0.9 * (1 - w), 0, 0);
+    Wd.scale.set(1, 1, Math.max(0.02, w));
+    Wd.visible = w > 0.001;
+    let s;
+    if (mode === 'loader') {
+      holder.rotation.set(Math.sin(t * 0.7) * 0.05, 0.22 + Math.sin(t * 0.5) * 0.18, 0);
+      s = anim.sweep;
+    } else if (mode === 'nav') {
+      holder.rotation.set(Math.sin(t * 0.4) * 0.07, 0.18 + Math.sin(t * 0.55) * 0.32, 0);
+      s = ((t * 0.12) % 1) * 3 - 1.5;
+    } else {
+      holder.rotation.set(Math.sin(t * 0.5) * 0.08, 0.2 + Math.sin(t * 0.33) * 0.35, 0);
+      holder.position.y = Math.sin(t * 0.8) * 0.08;
+      s = ((t * 0.16) % 1) * 3 - 1.5;
+    }
+    sweep.position.x = s * 8;
+    sweep.intensity = 34 * Math.max(0, 1 - Math.abs(s));
+  }
+  const ctxs = new Map();
+  function renderTo(target, t, mode) {
+    pose(t, mode);
+    r.render(sc, cam);
+    const dpr = Math.min(devicePixelRatio, 2);
+    const w = Math.round(target.clientWidth * dpr), h = Math.round(target.clientHeight * dpr);
+    if (!w || !h) return;
+    if (target.width !== w || target.height !== h) { target.width = w; target.height = h; }
+    let ctx = ctxs.get(target); if (!ctx) { ctx = target.getContext('2d'); ctxs.set(target, ctx); }
+    ctx.clearRect(0, 0, w, h);
+    ctx.drawImage(cv, 0, 0, w, h);
+  }
+  // assemble: roof pieces fly in from either side, the wordmark rises and extrudes, a light sweeps across
+  function intro() {
+    Object.assign(anim, { l: 0, r: 0, w: 0, sweep: -1.5 });
+    gsap.set('#loader .mark', { autoAlpha: 1, y: 0 });
+    return gsap.timeline()
+      .to(anim, { l: 1, duration: 2.0, ease: 'expo.out' }, 0)
+      .to(anim, { r: 1, duration: 2.0, ease: 'expo.out' }, 0.14)
+      .to(anim, { w: 1, duration: 1.8, ease: 'expo.out' }, 0.5)
+      .to(anim, { sweep: 1.5, duration: 1.8, ease: 'power2.inOut' }, 1.0);
+  }
+  return { renderTo, intro };
+})();
+const logoLoader = document.getElementById('logoLoader');
+const markEl = document.querySelector('#loader .mark'), loaderEl = document.getElementById('loader');
+function renderLogos(t) {
+  if (markEl.style.visibility !== 'hidden' && loaderEl.style.display !== 'none') logoRig.renderTo(logoLoader, t, 'loader');
+}
+window.TamlikLoader.logoIn = () => logoRig.intro();
+
+/* ---------------------------------------------------------
+   Frame loop
+   --------------------------------------------------------- */
+const auto = { p: 0 };                         // the director drives this; the camera eases after it
+const intro = { v: DEBUG_P === null ? 1 : 0 };
+const INTRO_OFFSET = new THREE.Vector3(40, 180, 620);
+const qSway = new THREE.Quaternion(), eSway = new THREE.Euler();
+const clock = new THREE.Clock();
+let camP = DEBUG_P ?? 0, time = 0, first = true;
+
+function frame() {
+  const dt = Math.min(clock.getDelta(), 1 / 20);
+  time += dt;
+  if (DEBUG_P !== null) camP = DEBUG_P;
+  else if (first) camP = auto.p;
+  else camP += (auto.p - camP) * (1 - Math.exp(-dt * 2.2));
+
+  const s = sampleShot(camP);
+  const interior = smooth(0.52, 0.6, camP) * (1 - smooth(0.78, 0.86, camP));
+  const breathe = (1 - interior * 0.85) * (reduceMotion ? 0 : 1);
+  camera.position.copy(s.pos);
+  camera.position.x += Math.sin(time * 0.37) * 1.4 * breathe;
+  camera.position.y += Math.sin(time * 0.53) * 0.9 * breathe;
+  camera.position.addScaledVector(INTRO_OFFSET, intro.v * intro.v);
+
+  // slow hand-held drift in place of mouse parallax
+  const sx = Math.sin(time * 0.13) * 0.4 + Math.sin(time * 0.071) * 0.25;
+  const sy = Math.sin(time * 0.09 + 1.3) * 0.3;
+  qSway.setFromEuler(eSway.set(-sy * 0.03 - intro.v * 0.12, -sx * 0.05, 0));
+  const q = s.q.clone().multiply(qSway);
+  if (first || DEBUG_P !== null) { camera.quaternion.copy(q); first = false; }
+  else camera.quaternion.slerp(q, 1 - Math.exp(-dt * 4.5));
+
+  const fov = s.fov + intro.v * 8;
+  if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); setPointScale(); }
+
+  const night = smooth(0.12, 0.95, camP) * 0.8;
+  skyMat.uniforms.uNight.value = night;
+  skyMat.uniforms.uTime.value = time;
+  cityMat.uniforms.uLit.value = 0.26 + 0.16 * night;
+  cityMat.uniforms.uNight.value = night;
+  water.material.uniforms.time.value = time * 0.45;
+  surfMat.uniforms.uTime.value = time;
+  surfMat.uniforms.uNight.value = night;
+  for (const d of dhows) { d.position.y = 0.2 + Math.sin(time * 1.1 + d.userData.phase) * 0.25; d.rotation.z = Math.sin(time * 0.8 + d.userData.phase) * 0.035; }
+  lightsMat.uniforms.uTime.value = time;
+  sky.position.copy(camera.position);
+  tower.userData.beacon.material.color.setRGB(5, 0.25, 0.1).multiplyScalar(0.25 + 0.75 * Math.pow(0.5 + 0.5 * Math.sin(time * 1.6), 3));
+  cloudU.uCloudT.value = time;
+  cloudU.uCloudDay.value = 1 - night * 0.7;
+
+  // threshold moment: a touch more glow and lens fringing as we cross into the penthouse
+  const cross = Math.exp(-Math.pow((camP - 0.595) / 0.03, 2));
+  bloom.strength = 0.55 - interior * 0.22 + cross * 0.12;
+  skyMat.uniforms.uSunI.value = 1 - interior * 0.8;
+  sunLight.intensity = 2.4 * (1 - interior * 0.75);
+  finish.uniforms.uCA.value = 0.006 + cross * 0.014;
+  finish.uniforms.uTime.value = time;
+
+  composer.render();
+  renderLogos(time);
+}
+
+/* ---------------------------------------------------------
+   Director: one pass ≈ 65 s, then curtains close on the logo
+   and the film starts again — runs forever, no input needed.
+   --------------------------------------------------------- */
+// [progress to reach, seconds to get there]
+const SHOTS = [
+  [0.05, 5], [0.14, 3.5], [0.26, 5.5], [0.33, 3.5], [0.46, 6.5], [0.515, 3],
+  [0.60, 5.5], [0.665, 3], [0.785, 6.5], [0.845, 3.5], [0.93, 6], [1, 4.5],
+];
+const HOLD_END = 3;
+
+function curtainsOpen(tl) {
+  tl.to('#loader .mark', { autoAlpha: 0, y: -24, duration: 0.8, ease: 'power2.in' })
+    .to('#loader .top', { yPercent: -100, duration: 1.8, ease: 'expo.inOut' }, '-=0.15')
+    .to('#loader .bot', { yPercent: 100, duration: 1.8, ease: 'expo.inOut' }, '<')
+    .to(intro, { v: 0, duration: reduceMotion ? 0.01 : 4.2, ease: 'power3.out' }, '<0.1');
+}
+
+function curtainsClose(tl) {
+  tl.to('#loader .top', { yPercent: 0, duration: 1.5, ease: 'expo.inOut' })
+    .to('#loader .bot', { yPercent: 0, duration: 1.5, ease: 'expo.inOut' }, '<')
+    .set('#loader .mark', { y: 0 })
+    .add(() => window.TamlikLoader.logoIn(), '-=0.2')
+    .to({}, { duration: 2.8 });
+}
+
+function runFilm() {
+  const tl = gsap.timeline({ onComplete: () => { resetFilm(); runFilm(); } });
+  curtainsOpen(tl);
+  let at = 2.4;                                   // start moving as the curtains part
+  SHOTS.forEach(([p, d], i) => {
+    const ease = i === 0 ? 'sine.in' : i === SHOTS.length - 1 ? 'sine.out' : 'none';
+    tl.to(auto, { p, duration: d, ease }, at);
+    at += d;
+  });
+  tl.to({}, { duration: HOLD_END }, at);
+  curtainsClose(tl);
+}
+
+function resetFilm() {                             // behind closed curtains: rewind to the opening shot
+  auto.p = 0; camP = 0; intro.v = 1; first = true;
+}
+
+setPointScale();
+// cloud shadows on every lit outdoor surface (the penthouse interior keeps its own light)
+{
+  const inside = new Set();
+  pent.traverse((o) => inside.add(o));
+  scene.traverse((o) => {
+    if (!o.isMesh || inside.has(o)) return;
+    for (const m of [].concat(o.material)) if (m.isMeshStandardMaterial) addCloudShadows(m);
+  });
+  if (!water.material.fragmentShader.includes('cloudShade(worldPosition')) console.warn('water cloud patch not applied');
+}
+renderer.compile(scene, camera);
+frame();
+renderer.setAnimationLoop(frame);
+
+if (DEBUG_P !== null) {
+  gsap.set('#loader', { display: 'none' });
+} else {
+  logoRig.intro();
+  gsap.delayedCall(2.6, () => window.TamlikLoader.finish(runFilm));
+}
+</script>
+</body>
+</html>
