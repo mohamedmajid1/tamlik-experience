@@ -46,6 +46,15 @@
   #loader .bar i{position:absolute;inset:0;background:var(--gold);transform-origin:left;transform:scaleX(0)}
   #loader .count{font-size:11px;letter-spacing:.3em;color:var(--muted);font-variant-numeric:tabular-nums}
 
+  /* closing caption: where to find Tamlik, fading in over the drone show; the curtains close over it */
+  #outro{position:fixed;left:0;right:0;bottom:clamp(28px,7vh,110px);z-index:10;display:flex;flex-direction:column;align-items:center;gap:clamp(10px,1.4vh,20px);opacity:0;pointer-events:none;text-shadow:0 1px 18px rgba(0,0,0,.55)}
+  #outro::before{content:"";position:absolute;left:0;right:0;bottom:calc(-1 * clamp(28px,7vh,110px));height:calc(100% + clamp(28px,7vh,110px) + 18vh);background:linear-gradient(to top,rgba(6,7,9,.62),rgba(6,7,9,.34) 55%,rgba(6,7,9,0));z-index:-1}
+  #outro .rule{width:min(220px,40vw);height:1px;background:linear-gradient(90deg,rgba(1,166,82,0),var(--gold),rgba(1,166,82,0))}
+  #outro .site{font-family:var(--serif);font-weight:300;font-size:clamp(22px,calc(1.3vw + 1vh),42px);letter-spacing:.3em;padding-left:.3em;color:var(--paper)}
+  #outro .handles{display:flex;flex-wrap:wrap;justify-content:center;gap:10px clamp(22px,2.6vw,48px);max-width:92vw;font-size:clamp(14px,calc(0.7vw + 0.55vh),22px);font-weight:400;letter-spacing:.14em;color:rgba(242,237,228,.78)}
+  #outro .handles span{display:inline-flex;align-items:center;gap:.6em;white-space:nowrap}
+  #outro svg{width:1.25em;height:1.25em;fill:none;stroke:var(--green-text);stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
   .nogl{position:fixed;inset:0;display:none;place-items:center;text-align:center;padding:24px;z-index:5;background:radial-gradient(120% 80% at 50% 100%,#3a2415 0%,#0c0d11 60%)}
 
 </style>
@@ -64,6 +73,16 @@
   <div class="half top"></div><div class="half bot"></div>
   <div class="mark">
     <canvas class="logo3d" id="logoLoader" role="img" aria-label="Tamlik"></canvas>
+  </div>
+</div>
+
+<div id="outro" aria-hidden="true">
+  <i class="rule"></i>
+  <div class="site">tamlikoman.com</div>
+  <div class="handles">
+    <span><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r=".6"/></svg>@tamlikoman</span>
+    <span><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10.5v6M8 7.5v.2M11.5 16.5v-6M11.5 13.2c0-1.7 1-2.7 2.4-2.7s2.1 1 2.1 2.7v3.3"/></svg><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M15.5 7h-1.4A2.6 2.6 0 0 0 11.5 9.6V21M8.8 12.4h5.6"/></svg>Tamlik Properties</span>
+    <span><svg viewBox="0 0 24 24"><path d="M5.5 3.5h3l1.6 4.2-2.1 1.3a11 11 0 0 0 5 5l1.3-2.1 4.2 1.6v3a2 2 0 0 1-2 2A15 15 0 0 1 3.5 5.5a2 2 0 0 1 2-2z"/></svg>+968 9215 5559</span>
   </div>
 </div>
 
@@ -110,6 +129,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 const params = new URLSearchParams(location.search);
 const DEBUG_P = params.has('p') ? parseFloat(params.get('p')) : null;   // ?p=0.5 jumps straight to a shot
 const RECORD = params.has('record');
+const DEBUG_FT = params.has('ft') ? parseFloat(params.get('ft')) : null;   // ?ft=58 pins the film clock (drones, gulls) for stills
 const FOV_K = params.has('fovk') ? parseFloat(params.get('fovk')) : 0.5;                                     // offline frame capture (tools/record.mjs)
 window.__marks = [];
 const isMobile = !params.has('record') && (matchMedia('(max-width: 900px)').matches || matchMedia('(pointer: coarse)').matches);
@@ -650,6 +670,10 @@ const parapetMat = new THREE.ShaderMaterial({ uniforms: cityUniforms, fog: true,
 
 
 const buildings = [], mosqueSpots = [];
+// Tamlik building sites: blocks left open for branded hoardings, a rising frame and a crane
+const SITES = [{ x: 60, z: -120, ry: -Math.PI / 2 }, { x: -60, z: -300, ry: Math.PI / 2 }, { x: 120, z: 60, ry: -Math.PI / 2 }];
+const onSite = (x, z) => SITES.some(s => Math.abs(x - s.x) < 33 && Math.abs(z - s.z) < 33);
+const hideOnSite = (m, x, z) => { if (onSite(x, z)) m.makeScale(0, 0, 0); };   // same random draws, so the rest of the city is unchanged
 for (let gx = -13; gx <= 7; gx++) {
   for (let gz = -30; gz <= 8; gz++) {
     if (gx === 0) continue;                                                             // grand boulevard
@@ -680,10 +704,11 @@ for (let gx = -13; gx <= 7; gx++) {
   const extra = buildings.filter(() => rand() < 0.45);                                  // rooftop stair towers / majlis rooms
   const mesh = new THREE.InstancedMesh(geo, cityMat, buildings.length + extra.length);
   const m = new THREE.Matrix4();
-  buildings.forEach(([x, z, w, h, d], i) => { m.makeScale(w, h, d).setPosition(x, 0, z); mesh.setMatrixAt(i, m); });
+  buildings.forEach(([x, z, w, h, d], i) => { m.makeScale(w, h, d).setPosition(x, 0, z); hideOnSite(m, x, z); mesh.setMatrixAt(i, m); });
   extra.forEach(([x, z, w, h, d], i) => {
     const s = 0.28 + rand() * 0.2;
     m.makeScale(w * s, 3.4, d * s).setPosition(x + (rand() - 0.5) * w * 0.4, h, z + (rand() - 0.5) * d * 0.4);
+    hideOnSite(m, x, z);
     mesh.setMatrixAt(buildings.length + i, m);
   });
   mesh.frustumCulled = false;
@@ -696,7 +721,7 @@ for (let gx = -13; gx <= 7; gx++) {
   pGeo.groups.forEach((g) => { if (g.materialIndex !== 2 && g.materialIndex !== 3) for (let k = 0; k < g.count; k++) keep.push(pGeo.index.array[g.start + k]); });
   pGeo.setIndex(keep); pGeo.clearGroups();
   const parapets = new THREE.InstancedMesh(pGeo, parapetMat, buildings.length);
-  buildings.forEach(([x, z, w, h, d], i) => { m.makeScale(w + 0.15, 1.5, d + 0.15).setPosition(x, h, z); parapets.setMatrixAt(i, m); });
+  buildings.forEach(([x, z, w, h, d], i) => { m.makeScale(w + 0.15, 1.5, d + 0.15).setPosition(x, h, z); hideOnSite(m, x, z); parapets.setMatrixAt(i, m); });
   parapets.frustumCulled = false;
   scene.add(parapets);
 
@@ -711,7 +736,7 @@ for (let gx = -13; gx <= 7; gx++) {
   const tankMesh = new THREE.InstancedMesh(tGeo, new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.55 }), tanks.length);
   const c = new THREE.Color();
   tanks.forEach(([x, y, z, s], i) => {
-    m.makeScale(s * 0.75, s * 1.5, s * 0.75).setPosition(x, y, z); tankMesh.setMatrixAt(i, m);
+    m.makeScale(s * 0.75, s * 1.5, s * 0.75).setPosition(x, y, z); hideOnSite(m, x, z); tankMesh.setMatrixAt(i, m);
     tankMesh.setColorAt(i, rand() < 0.3 ? c.setRGB(0.55, 0.68, 0.8) : c.setRGB(0.85, 0.84, 0.8));
   });
   scene.add(tankMesh);
@@ -1077,8 +1102,8 @@ const lightsMat = new THREE.ShaderMaterial({
     for (let x = X0; x < X1; x += step) if (onLand(x, z)) push(x, 7, z + 6, lamp, 0.45);
   }
   for (let z = Z0; z < Z1; z += 16) { push(-26, 9, z, blvd, 0.55); push(26, 9, z + 8, blvd, 0.55); }
-  for (let z = TOWER_Z + 30; z < TOWER_Z + 96; z += 6) { push(-9, 0.6, z, blvd, 0.3); push(9, 0.6, z, blvd, 0.3); }
-  for (let z = Z0; z < Z1; z += 14) push(coastX(z) - 26, 6, z, blvd, 0.5);                  // corniche promenade
+  for (let z = TOWER_Z + 30; z < TOWER_Z + 96; z += 6) { push(-9, 0.6, z, green, 0.3); push(9, 0.6, z, green, 0.3); }   // Tamlik green leads to the tower
+  for (let z = Z0, i = 0; z < Z1; z += 14, i++) push(coastX(z) - 26, 6, z, i % 4 ? blvd : green, 0.5);   // corniche promenade, every fourth lamp in brand green
   for (const [x, z] of mosqueSpots) push(x + 9, 32, z + 9, green, 0.7);                     // lit minaret tips
   for (const [x, z] of [[0, 62], [-78, -58], [78, -58], [-78, 58], [78, 58]]) push(GRAND.x + x, x === 0 ? 100 : 55, GRAND.z + z, green, 0.9);
   for (const d of dhows) push(d.position.x, 5, d.position.z, lantern, 0.6);
@@ -1237,6 +1262,203 @@ coreMat.onBeforeCompile = (sh) => {
   const up = new THREE.PointLight(0x3dff9a, 900, 70, 1.6); up.position.set(0, 3, Z + 16); scene.add(up);
   const warmUp = new THREE.PointLight(0xffb070, 500, 60, 1.6); warmUp.position.set(0, 26, Z + 22); scene.add(warmUp);
 }
+
+/* ---------------------------------------------------------
+   Tamlik across the city: building sites wrapped in branded
+   hoardings with cranes, a lit sign on the tower crown, and a
+   drone show that draws the logo in the night sky at the end
+   --------------------------------------------------------- */
+const LOGO_PATHS = [...document.querySelectorAll('#tamlik-logo path')].map(p => ({ id: p.id, fill: p.getAttribute('fill'), d: new Path2D(p.getAttribute('d')) }));
+function drawLogo2D(ctx, x, y, w, colors = {}) {
+  const k = w / 1390;
+  ctx.save(); ctx.translate(x, y); ctx.scale(k, k);
+  for (const p of LOGO_PATHS) { ctx.fillStyle = colors[p.id] || p.fill; ctx.fill(p.d); }
+  ctx.restore();
+}
+// the logo as flat shapes, centred, facing +z (mats keyed by SVG path id)
+function flatLogo(width, mats) {
+  const g = new THREE.Group(), k = width / 1390;
+  for (const path of new SVGLoader().parse(LOGO_SVG).paths) {
+    const geo = new THREE.ShapeGeometry(SVGLoader.createShapes(path), 6);
+    geo.translate(-695, -197, 0); geo.scale(k, -k, 1);
+    g.add(new THREE.Mesh(geo, mats[path.userData.node.id]));
+  }
+  return g;
+}
+function canvasTex(w, h, draw) {
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  draw(cv.getContext('2d'), w, h);
+  const t = new THREE.CanvasTexture(cv);
+  t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8;
+  return t;
+}
+
+// building sites
+{
+  const hoardTex = canvasTex(2048, 128, (c, w, h) => {
+    c.fillStyle = '#17191c'; c.fillRect(0, 0, w, h);
+    c.fillStyle = '#01A652'; c.fillRect(0, h - 18, w, 18); c.fillRect(0, 0, w, 3);
+    c.fillStyle = '#e9e4da'; c.font = '300 42px "Segoe UI", Arial, sans-serif'; c.textBaseline = 'middle';
+    if ('letterSpacing' in c) c.letterSpacing = '6px';
+    for (const x0 of [70, 1094]) {
+      drawLogo2D(c, x0, 18, 290, { 'roof-left': '#d4d1ca' });
+      c.fillText('tamlikoman.com', x0 + 400, 58);
+    }
+  });
+  const bannerTex = canvasTex(512, 256, (c, w, h) => {
+    c.fillStyle = '#01A652'; c.fillRect(0, 0, w, h);
+    drawLogo2D(c, 40, 76, 432, { 'roof-left': '#ffffff', 'roof-right': '#ffffff', wordmark: '#ffffff' });
+  });
+  const latticeTex = canvasTex(64, 64, (c, w, h) => {
+    c.fillStyle = '#6d6a63'; c.fillRect(0, 0, w, h);
+    c.strokeStyle = '#f1ede4'; c.lineWidth = 7;
+    c.strokeRect(3, 3, w - 6, h - 6);
+    c.beginPath(); c.moveTo(0, 0); c.lineTo(w, h); c.moveTo(w, 0); c.lineTo(0, h); c.lineWidth = 5; c.stroke();
+  });
+  latticeTex.wrapS = latticeTex.wrapT = THREE.RepeatWrapping;
+  const lattice = (sx, sy, sz, rep) => {        // a lattice box, its texture tiled along the long axis
+    const geo = new THREE.BoxGeometry(sx, sy, sz), uv = geo.attributes.uv;
+    for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i), uv.getY(i) * rep);
+    return geo;
+  };
+  const hoardMat = new THREE.MeshStandardMaterial({ map: hoardTex, roughness: 0.8, emissive: 0xffffff, emissiveMap: hoardTex, emissiveIntensity: 0.3 });
+  const bannerMat = new THREE.MeshStandardMaterial({ map: bannerTex, roughness: 0.7, emissive: 0xffffff, emissiveMap: bannerTex, emissiveIntensity: 0.35, side: THREE.DoubleSide });
+  const backMat = new THREE.MeshStandardMaterial({ color: 0x1c1d20, roughness: 0.9 });
+  const dirtMat = new THREE.MeshStandardMaterial({ color: 0x8e7c63, roughness: 1 });
+  const concMat = new THREE.MeshStandardMaterial({ color: 0xa29d94, roughness: 0.92 });
+  const netMat = new THREE.MeshStandardMaterial({ color: 0x0b6e3b, roughness: 0.85, emissive: 0x01a652, emissiveIntensity: 0.06, transparent: true, opacity: 0.88, side: THREE.DoubleSide });
+  const craneMat = new THREE.MeshStandardMaterial({ map: latticeTex, roughness: 0.6, metalness: 0.2 });
+  const redMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(4, 0.2, 0.08) });
+  const HW = 27, HH = 3.4;                        // hoarding half-width, height
+
+  SITES.forEach((site, n) => {
+    const g = new THREE.Group(); g.position.set(site.x, 0, site.z); g.rotation.y = site.ry; scene.add(g);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(HW * 2, HW * 2), dirtMat);
+    ground.rotation.x = -Math.PI / 2; ground.position.y = 0.06; g.add(ground);
+    // hoardings on all four sides, the branded face outward
+    for (let s = 0; s < 4; s++) {
+      const a = s * Math.PI / 2;
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(HW * 2, HH), hoardMat);
+      face.position.set(Math.sin(a) * (HW + 0.05), HH / 2, Math.cos(a) * (HW + 0.05)); face.rotation.y = a; g.add(face);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(HW * 2, HH, 0.08), backMat);
+      back.position.set(Math.sin(a) * HW, HH / 2, Math.cos(a) * HW); back.rotation.y = a; g.add(back);
+    }
+    // the rising concrete frame, top floors wrapped in green safety netting
+    const floors = [5, 7, 4][n], FH = 3.6, FW = 34, FD = 26;
+    for (let f = 0; f <= floors; f++) {
+      const slab = new THREE.Mesh(new THREE.BoxGeometry(FW, 0.45, FD), concMat);
+      slab.position.set(0, f * FH + 0.22, -3); slab.castShadow = slab.receiveShadow = true; g.add(slab);
+      if (f === floors) break;
+      for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) {
+        const col = new THREE.Mesh(new THREE.BoxGeometry(0.8, FH, 0.8), concMat);
+        col.position.set(-FW / 2 + 1 + i * (FW - 2) / 3, f * FH + FH / 2 + 0.45, -3 - FD / 2 + 1 + j * (FD - 2) / 2);
+        col.castShadow = true; g.add(col);
+      }
+    }
+    const net = new THREE.Mesh(new THREE.BoxGeometry(FW + 0.6, FH * 2, FD + 0.6, 1, 1, 1), netMat);
+    net.geometry.deleteAttribute('uv');
+    net.position.set(0, (floors - 2) * FH + FH + 0.45, -3); g.add(net);
+    // tower crane beside the frame, a Tamlik banner on its counter-jib
+    const MH = floors * FH + 24;
+    const crane = new THREE.Group(); crane.position.set(HW - 7, 0, -HW + 8); g.add(crane);
+    const mast = new THREE.Mesh(lattice(2, MH, 2, MH / 2), craneMat); mast.position.y = MH / 2; crane.add(mast);
+    const slew = new THREE.Group(); slew.position.y = MH; slew.rotation.y = [-2.3, -2.0, -2.6][n]; crane.add(slew);
+    const jib = new THREE.Mesh(lattice(1.6, 44, 1.6, 22).rotateX(Math.PI / 2), craneMat); jib.position.set(0, 1.2, 14); slew.add(jib);
+    const cab = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.2, 2.6), new THREE.MeshStandardMaterial({ color: 0xe9e5dc, roughness: 0.5 })); cab.position.set(0, -0.2, 1.4); slew.add(cab);
+    const apex = new THREE.Mesh(lattice(1.4, 7, 1.4, 3.5), craneMat); apex.position.y = 4.2; slew.add(apex);
+    const weight = new THREE.Mesh(new THREE.BoxGeometry(2.6, 2.6, 4.5), concMat); weight.position.set(0, 0.2, -6.5); slew.add(weight);
+    const banner = new THREE.Mesh(new THREE.PlaneGeometry(7, 3.5), bannerMat); banner.position.set(1.35, 0.4, -5.5); banner.rotation.y = Math.PI / 2; slew.add(banner);
+    const banner2 = banner.clone(); banner2.position.x = -1.35; banner2.rotation.y = -Math.PI / 2; slew.add(banner2);
+    for (const [y, z] of [[7.8, 0], [1.2, 35.8]]) { const l = new THREE.Mesh(new THREE.SphereGeometry(0.45, 10, 6), redMat); l.position.set(0, y, z); slew.add(l); }
+    site.slew = slew; site.ry0 = slew.rotation.y;
+  });
+}
+
+// lit Tamlik sign on all four faces of the tower crown
+{
+  const top = LEVELS * LH, rot = LEVELS * TWIST;
+  const green = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.03, 1.15, 0.5), side: THREE.DoubleSide });
+  const white = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.15, 1.1, 1.0), side: THREE.DoubleSide });
+  const ring = new THREE.Group(); ring.position.y = top + 6.4; ring.rotation.y = rot; tower.add(ring);
+  for (let s = 0; s < 4; s++) {
+    const a = s * Math.PI / 2, sign = flatLogo(27, { 'roof-left': white, 'roof-right': green, wordmark: green });
+    sign.position.set(Math.sin(a) * (HALF + 0.75), 0, Math.cos(a) * (HALF + 0.75)); sign.rotation.y = a;
+    ring.add(sign);
+  }
+}
+
+// drone show: ~800 lights lift off over the city at nightfall and draw the logo in the sky.
+// Driven by the film clock, so every loop (and every recording) plays it the same way
+const drones = (() => {
+  const STEP = isMobile ? 17 : 12;
+  const cv = document.createElement('canvas'); cv.width = 1390; cv.height = 394;
+  const c2 = cv.getContext('2d', { willReadFrequently: true });
+  drawLogo2D(c2, 0, 0, 1390, { 'roof-left': '#ff0000', 'roof-right': '#00ff00', wordmark: '#00ff00' });
+  const px = c2.getImageData(0, 0, 1390, 394).data;
+  let sd = 7331; const r = () => ((sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296);   // own seed: the city's random stream stays untouched
+  const C = new THREE.Vector3(-70, 300, -1010), k = 520 / 1390;
+  const toCam = new THREE.Vector3(-150, 330, 90).sub(C).setY(0).normalize();              // faces the closing aerial
+  const right = new THREE.Vector3().crossVectors(UP, toCam).normalize();
+  const tgt = [], start = [], col = [], du = [], p = new THREE.Vector3();
+  for (let y = STEP / 2, row = 0; y < 394; y += STEP * 0.866, row++) {
+    for (let x = (row % 2 ? STEP / 2 : 0) + STEP / 4; x < 1390; x += STEP) {
+      const i = (Math.floor(y) * 1390 + Math.floor(x)) * 4;
+      if (px[i + 3] < 128) continue;
+      p.copy(C).addScaledVector(right, (x - 695) * k).addScaledVector(UP, (197 - y) * k).addScaledVector(toCam, (r() - 0.5) * 4);
+      tgt.push(p.x, p.y, p.z);
+      start.push(C.x + (x - 695) * k * 1.3 + (r() - 0.5) * 160, 45 + r() * 50, C.z + 120 + (r() - 0.5) * 240);
+      col.push(...(px[i] > 128 ? [2.0, 1.95, 1.8] : [0.1, 2.2, 0.85]));
+      du.push(x / 1390 * 1.8 + r() * 1.4, x / 1390);
+    }
+  }
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(tgt, 3));
+  geo.setAttribute('aStart', new THREE.Float32BufferAttribute(start, 3));
+  geo.setAttribute('aColor', new THREE.Float32BufferAttribute(col, 3));
+  geo.setAttribute('aDU', new THREE.Float32BufferAttribute(du, 2));
+  const mat = new THREE.ShaderMaterial({
+    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    uniforms: { uT: { value: 0 }, uShow: { value: 0 }, uSweep: { value: -1 }, uScale: lightsMat.uniforms.uScale, uDpr: lightsMat.uniforms.uDpr },
+    vertexShader: /* glsl */`
+      attribute vec3 aStart; attribute vec3 aColor; attribute vec2 aDU;
+      uniform float uT; uniform float uShow; uniform float uSweep; uniform float uScale; uniform float uDpr;
+      varying vec3 vColor; varying float vFade;
+      void main(){
+        float k = clamp((uT - aDU.x) / 5.0, 0.0, 1.0);
+        k = k * k * (3.0 - 2.0 * k);
+        vec3 ctrl = vec3(mix(aStart.x, position.x, 0.2), position.y * 0.9, mix(aStart.z, position.z, 0.4));
+        vec3 p = mix(mix(aStart, ctrl, k), mix(ctrl, position, k), k);
+        p += vec3(sin(uT * 1.3 + aDU.x * 9.0), sin(uT * 1.1 + aDU.y * 23.0), cos(uT * 0.9 + aDU.x * 5.0)) * 0.3;
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mv;
+        float ps = 2.4 * uScale / -mv.z;
+        gl_PointSize = clamp(ps, 2.0 * uDpr, 14.0 * uDpr);
+        vFade = smoothstep(0.0, 2.0 * uDpr, ps) * uShow;
+        float sweep = exp(-pow((aDU.y - uSweep) * 6.0, 2.0));
+        // fly as soft white lights, take on the brand colours as they lock into place
+        vColor = mix(vec3(1.3, 1.25, 1.15) * 0.6, aColor, k) * (1.0 + 1.3 * sweep * k);
+      }`,
+    fragmentShader: /* glsl */`
+      varying vec3 vColor; varying float vFade;
+      void main(){
+        float a = smoothstep(0.5, 0.0, length(gl_PointCoord - 0.5));
+        gl_FragColor = vec4(vColor * a * a * vFade, 1.0);
+      }`,
+  });
+  const pts = new THREE.Points(geo, mat);
+  pts.frustumCulled = false;
+  scene.add(pts);
+  const T0 = 50.5;                                   // film second the drones lift off
+  function update(ft) {
+    const show = smooth(T0 - 1, T0 + 1, ft);
+    pts.visible = show > 0;
+    if (!pts.visible) return;
+    mat.uniforms.uT.value = ft - T0;
+    mat.uniforms.uShow.value = show;
+    mat.uniforms.uSweep.value = lerp(-0.3, 1.3, clamp((ft - 57.6) / 2.4, 0, 1));
+  }
+  return { update };
+})();
 
 /* ---------------------------------------------------------
    Penthouse interior (local space of level PK, floor at y=0.25)
@@ -1736,6 +1958,7 @@ const qSway = new THREE.Quaternion(), eSway = new THREE.Euler();
 const clock = new THREE.Clock();
 let camP = DEBUG_P ?? 0, time = 0, first = true;
 
+const outroEl = document.getElementById('outro'); let outroA = -1;
 function frame() {
   const dt = Math.min(clock.getDelta(), 1 / 20);
   time += dt;
@@ -1779,7 +2002,12 @@ function frame() {
   surfMat.uniforms.uNight.value = night;
   for (const d of dhows) { d.position.y = 0.2 + Math.sin(time * 1.1 + d.userData.phase) * 0.25; d.rotation.z = Math.sin(time * 0.8 + d.userData.phase) * 0.035; }
   lightsMat.uniforms.uTime.value = time;
-  flock.update(time - filmT0);
+  const ft = DEBUG_FT ?? time - filmT0;
+  flock.update(ft);
+  drones.update(ft);
+  const oa = smooth(55.2, 57.2, ft);
+  if (oa !== outroA) { outroA = oa; outroEl.style.opacity = oa.toFixed(3); outroEl.style.transform = `translateY(${((1 - oa) * 12).toFixed(1)}px)`; }
+  for (const st of SITES) st.slew.rotation.y = st.ry0 + Math.sin(ft * 0.09 + st.x) * 0.35;   // cranes slew slowly
   sky.position.copy(camera.position);
   tower.userData.beacon.material.color.setRGB(5, 0.25, 0.1).multiplyScalar(0.25 + 0.75 * Math.pow(0.5 + 0.5 * Math.sin(time * 1.6), 3));
   cloudU.uCloudT.value = time;
@@ -1807,6 +2035,7 @@ const SHOTS = [
   [0.60, 5.5], [0.665, 3], [0.785, 6.5], [0.845, 3.5], [0.93, 6], [1, 4.5],
 ];
 const HOLD_END = 3;
+const LOGO_HOLD = 3.0;                            // seconds on the logo, from its first frame to the next curtain rise
 
 function curtainsOpen(tl) {
   tl.to('#loader .mark', { autoAlpha: 0, y: -24, duration: 0.8, ease: 'power2.in' })
@@ -1820,7 +2049,7 @@ function curtainsClose(tl) {
     .to('#loader .bot', { yPercent: 0, duration: 1.5, ease: 'expo.inOut' }, '<')
     .set('#loader .mark', { y: 0 })
     .add(() => window.TamlikLoader.logoIn(), '-=0.2')
-    .to({}, { duration: 2.8 });
+    .to({}, { duration: LOGO_HOLD - 0.2 });
 }
 
 let filmT0 = 0;
@@ -1872,7 +2101,7 @@ if (DEBUG_P !== null) {
   gsap.set('#loader', { display: 'none' });
 } else {
   window.TamlikLoader.logoIn();
-  gsap.delayedCall(3.0, () => window.TamlikLoader.finish(runFilm));
+  gsap.delayedCall(LOGO_HOLD, () => window.TamlikLoader.finish(runFilm));
 }
 </script>
 </body>
