@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#08090b">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
 <style>
   html,body{margin:0;height:100%;background:#08090b;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
   html.idle,html.idle *{cursor:none!important}
@@ -84,7 +85,7 @@
     V.muted = false;
     V.play().then(() => { soundOn = true; }).catch(() => { V.muted = true; V.play().catch(() => {}); });
   }
-  for (const ev of ['pointerdown', 'keydown', 'touchend']) addEventListener(ev, unmute);
+  for (const ev of ['pointerdown', 'mousedown', 'click', 'keydown', 'touchend']) addEventListener(ev, unmute, { capture: true });
   tap.addEventListener('click', play);
   addEventListener('pointerdown', () => { if (blocked || V.paused) play(); });
   // Fullscreen like the Al Yaqoot display: the first tap on the screen takes the page fullscreen (no install

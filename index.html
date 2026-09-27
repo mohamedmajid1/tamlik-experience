@@ -2232,7 +2232,7 @@ const soundtrack = (() => {
   const loopTime = () => Math.max(0, time - logoT0);
   const start = () => { a.currentTime = Math.min(loopTime(), 65); return a.play().then(() => { unlocked = true; }); };
   const unlock = () => { if (!unlocked) start().catch(() => {}); };
-  for (const ev of ['pointerdown', 'keydown', 'touchend']) addEventListener(ev, unlock, { passive: true });
+  for (const ev of ['pointerdown', 'mousedown', 'click', 'keydown', 'touchend']) addEventListener(ev, unlock, { passive: true, capture: true });
   return { restart() { a.currentTime = 0; a.play().then(() => { unlocked = true; }).catch(() => {}); } };
 })();
 window.TamlikLoader.logoIn = () => { logoT0 = time; window.__marks.push(performance.now()); soundtrack.restart(); return logoRig.intro(); };
