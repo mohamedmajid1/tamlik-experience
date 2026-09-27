@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tamlik Properties</title>
+<meta name="description" content="Tamlik Properties: a cinematic flight over Muscat at golden hour.">
+<meta name="theme-color" content="#08090b">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  html,body{margin:0;height:100%;background:#08090b;overflow:hidden;overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  html.idle,html.idle *{cursor:none!important}
+  video{position:fixed;inset:0;width:100%;height:100%;object-fit:contain;background:#08090b;opacity:0;transition:opacity .6s ease}
+  video.cover{object-fit:cover}
+  video.on{opacity:1}
+  #boot{position:fixed;inset:0;display:grid;place-items:center;transition:opacity .6s ease}
+  #boot.gone{opacity:0;pointer-events:none}
+  #boot .m{display:flex;flex-direction:column;align-items:center;gap:34px;width:min(62vw,560px)}
+  #boot svg{width:100%;height:auto;display:block}
+  #boot .bar{width:46%;height:3px;background:rgba(242,237,228,.14);border-radius:3px;overflow:hidden}
+  #boot .bar i{display:block;height:100%;width:100%;background:#01A652;transform-origin:left;transform:scaleX(0);transition:transform .25s linear}
+  #tap{position:fixed;inset:0;display:none;place-items:center;background:rgba(8,9,11,.35);border:0;padding:0;cursor:pointer}
+  #tap.show{display:grid}
+  #tap span{width:92px;height:92px;border-radius:50%;background:rgba(8,9,11,.55);border:2px solid rgba(242,237,228,.7);display:grid;place-items:center}
+  #tap span::after{content:"";margin-left:8px;border-style:solid;border-width:18px 0 18px 30px;border-color:transparent transparent transparent #f2ede4}
+</style>
+</head>
+<body>
+<video id="v" muted autoplay playsinline loop disablepictureinpicture disableremoteplayback preload="auto"></video>
+<div id="boot"><div class="m">
+  <svg viewBox="0 0 1390 394" role="img" aria-label="Tamlik">
+    <path id="roof-left" d="M 0.00 160.50 L 248.50 1.00 L 247.00 47.50 L 0.00 169.50 Z" fill="#595A5C"/>
+    <path id="roof-right" d="M 515.00 156.50 L 504.00 156.50 L 258.00 46.50 L 256.50 1.00 L 515.00 156.50 Z" fill="#01A652"/>
+    <path id="wordmark" d="M 1318.00 392.50 L 1254.00 392.50 L 1208.00 298.50 L 1179.00 392.50 L 1108.50 392.00 L 1179.00 162.50 L 1246.50 163.00 L 1228.00 236.50 L 1315.00 159.50 L 1379.50 160.00 L 1257.50 267.00 L 1318.00 392.50 Z M 167.00 392.50 L 94.50 392.00 L 151.50 217.00 L 121.00 214.50 L 98.00 218.50 L 75.00 227.50 L 53.00 242.50 L 60.50 223.00 L 88.00 189.50 L 104.00 178.50 L 132.00 166.50 L 151.00 162.50 L 299.00 162.50 L 279.00 217.50 L 218.50 219.00 L 167.00 392.50 Z M 456.00 392.50 L 393.00 392.50 L 392.00 342.50 L 317.00 342.50 L 293.00 389.50 L 220.50 389.00 L 330.50 211.00 L 361.00 176.50 L 383.00 163.50 L 456.50 163.00 L 456.00 392.50 Z M 753.00 392.50 L 681.50 392.00 L 726.50 245.00 L 641.00 336.50 L 627.00 343.50 L 617.50 334.00 L 601.00 238.50 L 552.50 391.00 L 480.50 392.00 L 550.00 162.50 L 623.00 162.50 L 644.00 168.50 L 657.50 185.00 L 668.00 235.50 L 681.50 225.00 L 724.00 178.50 L 748.00 163.50 L 820.50 164.00 L 753.00 392.50 Z M 878.00 392.50 L 835.00 387.50 L 812.00 374.50 L 799.50 355.00 L 798.50 326.00 L 845.50 163.00 L 917.00 162.50 L 878.50 287.00 L 874.50 305.00 L 875.50 325.00 L 883.00 334.50 L 892.00 337.50 L 989.50 334.00 L 975.00 387.50 L 878.00 392.50 Z M 1063.00 392.50 L 992.00 392.50 L 991.50 390.00 L 1063.50 164.00 L 1134.00 162.50 L 1063.00 392.50 Z M 396.50 302.00 L 396.00 219.50 L 345.50 302.00 L 396.50 302.00 Z" fill="#01A652"/>
+  </svg>
+  <div class="bar"><i id="prog"></i></div>
+</div></div>
+<button id="tap" type="button" aria-label="Play"><span></span></button>
+<script>
+/* Tamlik display player: an ordinary web page, nothing to install.
+   The film is pre-rendered, so the screen only decodes video instead of running 3D.
+   The first visit downloads it once into the browser's Cache Storage; after that it plays from
+   the device (also offline) and only checks a tiny version file every 30 minutes. */
+(() => {
+  const V = document.getElementById('v'), boot = document.getElementById('boot'), prog = document.getElementById('prog'), tap = document.getElementById('tap');
+  const Q = new URLSearchParams(location.search);
+  const CACHE = 'tamlik-film';
+  const vp = () => { const vv = window.visualViewport; return { w: vv ? vv.width : innerWidth, h: vv ? vv.height : innerHeight }; };
+  let portrait = vp().h >= vp().w;
+  let film = null, current = null, blocked = false;
+
+  const sideSet = () => (portrait ? film.portrait : film.landscape) || film.portrait || film.landscape;
+  function pick() {
+    const set = sideSet();
+    let want = Q.get('q') || Q.get('fps') || '';                       // ?q=4k, ?fps=30 … pin a version
+    if (!want) { try { want = localStorage.getItem('tamlik.fps') || ''; } catch (e) {} }
+    return set[want] || set['60'] || Object.values(set)[0];
+  }
+  function fit() {
+    if (!V.videoWidth) return;
+    const { w, h } = vp(), a = w / h, b = V.videoWidth / V.videoHeight;
+    V.classList.toggle('cover', Math.abs(a - b) / b < 0.08);   // same shape as the film: fill edge to edge
+  }
+
+  // Autoplay: muted video normally starts by itself. Where the browser refuses (battery saver,
+  // data saver, some TV browsers), show a play button instead of a frozen first frame.
+  async function play() {
+    V.muted = true; V.defaultMuted = true;
+    try { await V.play(); blocked = false; tap.classList.remove('show'); }
+    catch (e) { if (e && e.name === 'NotAllowedError') { blocked = true; tap.classList.add('show'); } }
+  }
+  tap.addEventListener('click', play);
+  addEventListener('pointerdown', () => { if (blocked || V.paused) play(); });
+  // Fullscreen like the Al Yaqoot display: the first tap on the screen takes the page fullscreen (no install
+  // needed), and any later tap brings it back if it was left. Browsers only allow this from a tap/click.
+  // ?nofull turns it off.
+  function goFull() {
+    if (Q.has('nofull') || document.fullscreenElement || document.webkitFullscreenElement) return;
+    const el = document.documentElement, go = el.requestFullscreen || el.webkitRequestFullscreen;
+    if (go) { try { const r = go.call(el, { navigationUI: 'hide' }); if (r && r.catch) r.catch(() => {}); } catch (e) {} }
+  }
+  for (const ev of ['pointerdown', 'pointerup', 'click', 'touchend', 'keydown']) addEventListener(ev, goFull);
+
+  const openCache = () => ('caches' in window ? caches.open(CACHE).catch(() => null) : Promise.resolve(null));
+  async function load(variant, onProgress) {
+    const cache = await openCache();
+    const total = variant.parts.reduce((s, p) => s + p.bytes, 0);
+    let done = 0; const blobs = [];
+    for (const p of variant.parts) {
+      let res = cache && await cache.match(p.url).catch(() => null);
+      if (!res) {
+        for (let tries = 0; ; tries++) {
+          try { res = await fetch(p.url); if (res.ok) break; throw new Error(res.status); }
+          catch (e) { if (tries > 40) throw e; await new Promise(r => setTimeout(r, Math.min(15000, 1000 * 2 ** tries))); }
+        }
+        if (cache) { try { await cache.put(p.url, res.clone()); } catch (e) {} }
+      }
+      blobs.push(await res.blob()); done += p.bytes; onProgress && onProgress(done / total);
+    }
+    return URL.createObjectURL(new Blob(blobs, { type: 'video/mp4' }));
+  }
+  async function prune() {   // drop cached parts of older versions
+    const cache = await openCache(); if (!cache) return;
+    const keep = new Set();
+    for (const set of [film.portrait, film.landscape]) if (set) for (const k in set) for (const p of set[k].parts) keep.add(new URL(p.url, location.href).href);
+    for (const req of await cache.keys()) if (!keep.has(req.url)) cache.delete(req);
+  }
+  function setSrc(variant, url) {
+    const old = V.src; current = variant; V.src = url; play();
+    if (old) setTimeout(() => URL.revokeObjectURL(old), 3000);
+  }
+  // change films on the loop's closing card, so the cut can't be seen
+  function swapAtSeam(variant, url) {
+    const swap = () => {
+      if (!(V.currentTime >= V.duration - 0.35)) return;
+      V.removeEventListener('timeupdate', swap);
+      setSrc(variant, url);
+    };
+    V.addEventListener('timeupdate', swap);
+  }
+
+  async function start() {
+    film = await (await fetch('film.json', { cache: 'no-cache' })).json();
+    const variant = pick();
+    setSrc(variant, await load(variant, (f) => { prog.style.transform = 'scaleX(' + f + ')'; }));
+    V.classList.add('on'); boot.classList.add('gone');
+    if ('storage' in navigator && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+    prune().catch(() => {});
+    watchFrames();
+  }
+
+  // A screen that drops frames at 60 fps steps down to the 30 fps film, once, and remembers it.
+  function watchFrames() {
+    if (!current || current.fps !== 60 || Q.get('fps') || Q.get('q') || !V.getVideoPlaybackQuality) return;
+    let q0 = null;
+    const check = async () => {
+      if (V.paused) return setTimeout(check, 5000);
+      if (!q0) { q0 = V.getVideoPlaybackQuality(); return setTimeout(check, 30000); }
+      const q = V.getVideoPlaybackQuality();
+      const total = q.totalVideoFrames - q0.totalVideoFrames, dropped = q.droppedVideoFrames - q0.droppedVideoFrames;
+      if (total < 600 || dropped / total < 0.1) return;
+      try { localStorage.setItem('tamlik.fps', '30'); } catch (e) {}
+      const set = sideSet();
+      if (set['30']) swapAtSeam(set['30'], await load(set['30']));
+    };
+    setTimeout(check, 5000);
+  }
+
+  // Watchdog: if playback stalls (not because the browser wants a tap), bring it back without reloading.
+  let lastT = -1, still = 0;
+  setInterval(() => {
+    if (!V.src || !current || blocked) { still = 0; return; }
+    if (V.paused) play();
+    if (V.currentTime === lastT) { still += 2; if (still === 6) play(); if (still >= 20) { still = 0; const t = V.currentTime; V.load(); V.currentTime = t; play(); } }
+    else still = 0;
+    lastT = V.currentTime;
+  }, 2000);
+  V.addEventListener('error', () => setTimeout(() => { if (current) load(current).then((u) => setSrc(current, u)).catch(() => {}); }, 3000));
+  V.addEventListener('loadedmetadata', fit);
+  addEventListener('resize', fit);
+  // rotated screen: switch to the other orientation's film in place (no reload)
+  let flipTimer = 0;
+  addEventListener('resize', () => {
+    clearTimeout(flipTimer);
+    flipTimer = setTimeout(async () => {
+      const p = vp().h >= vp().w;
+      if (!film || p === portrait) return;
+      portrait = p; const v = pick();
+      if (v !== current) setSrc(v, await load(v));
+    }, 1200);
+  });
+
+  // quiet kiosk touches: hide the cursor when idle, keep the screen awake, no install prompts
+  let idleTimer = 0;
+  function wake() { document.documentElement.classList.remove('idle'); clearTimeout(idleTimer); idleTimer = setTimeout(() => document.documentElement.classList.add('idle'), 4000); }
+  addEventListener('mousemove', wake); addEventListener('pointerdown', wake); wake();
+  addEventListener('beforeinstallprompt', (e) => e.preventDefault());
+  if ('wakeLock' in navigator) {
+    const req = async () => { try { await navigator.wakeLock.request('screen'); } catch (e) {} };
+    req(); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { req(); play(); } });
+  }
+  if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+
+  // New version deployed: refresh the film in place (a reload would lose a tap-to-play permission).
+  let version = null;
+  async function checkVersion() {
+    try {
+      const r = await fetch('version.txt?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) return;
+      const v = (await r.text()).trim();
+      if (version === null) { version = v; return; }
+      if (!v || v === version) return;
+      version = v;
+      if (!blocked && !V.paused && !Q.has('stay')) { location.reload(); return; }
+      film = await (await fetch('film.json', { cache: 'no-cache' })).json();
+      const nv = pick();
+      if (JSON.stringify(nv.parts) !== JSON.stringify(current.parts)) swapAtSeam(nv, await load(nv));
+    } catch (e) {}
+  }
+  checkVersion(); setInterval(checkVersion, 30 * 60 * 1000);
+
+  start().catch((e) => { console.error(e); setTimeout(() => start().catch(() => {}), 15000); });
+})();
+</script>
+</body>
+</html>
