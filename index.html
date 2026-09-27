@@ -555,6 +555,29 @@ function terrainHeight(x, z) {
         road = max(road, exp(-vTW.x * vTW.x / 260.0) * (0.55 + 0.45 * pools));                   // the boulevard
         float coast = 500.0 + 45.0 * sin(vTW.z * 0.0023) + 25.0 * sin(vTW.z * 0.0061 + 1.3);
         float inCity = step(-845.0, vTW.x) * step(vTW.x, coast - 38.0) * step(-1865.0, vTW.z) * step(vTW.z, 545.0) * step(vTW.y, 3.0);
+        // the boulevard's furniture, painted on and anti-aliased: planted median, stone kerbs, pale paving under
+        // the palms, lane lines (dashed between lanes), all fading out before they're thinner than a pixel
+        {
+          float ax = abs(vTW.x);
+          float inB = step(-1865.0, vTW.z) * step(vTW.z, 545.0) * step(vTW.y, 3.0) * (1.0 - step(-715.0, vTW.z) * step(vTW.z, -470.0));
+          float fx = fwidth(vTW.x) + 1e-4, fz = fwidth(vTW.z) + 1e-4;
+          #define BAND(d, w, f) (1.0 - smoothstep((w) - (f), (w) + (f), (d)))
+          float median = BAND(ax, 3.1, fx);
+          float kerb = BAND(abs(ax - 3.25), 0.2, fx) + BAND(abs(ax - 20.35), 0.2, fx);
+          float walk = smoothstep(20.5 - fx, 20.5 + fx, ax) * (1.0 - smoothstep(37.0, 39.0, ax));
+          float dash = BAND(abs(fract(vTW.z / 9.0) - 0.5), 0.17, fz / 9.0);
+          float lines = (BAND(abs(ax - 8.3), 0.08, fx) + BAND(abs(ax - 12.3), 0.08, fx) + BAND(abs(ax - 16.3), 0.08, fx)) * dash
+                      + BAND(abs(ax - 3.9), 0.09, fx) + BAND(abs(ax - 19.9), 0.09, fx);
+          lines = clamp(lines, 0.0, 1.0) * (1.0 - smoothstep(0.12, 0.35, fx));
+          float tiles = BAND(abs(fract(vTW.x / 1.2) - 0.5), 0.46, fx / 1.2) * BAND(abs(fract(vTW.z / 1.2) - 0.5), 0.46, fz / 1.2);
+          tiles = mix(tiles, 0.85, smoothstep(0.08, 0.3, fx));
+          vec3 paving = vec3(0.36, 0.32, 0.27) * (0.78 + 0.22 * tiles);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.05, 0.075, 0.04), median * inB);
+          diffuseColor.rgb = mix(diffuseColor.rgb, paving, walk * inB);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.5, 0.46, 0.4), clamp(kerb, 0.0, 1.0) * inB);
+          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.78, 0.75, 0.68), lines * inB * 0.85);
+          road *= 1.0 - walk * inB * 0.7;                                                         // pavements aren't asphalt
+        }
         diffuseColor.rgb *= 1.0 - 0.45 * road * inCity;                                          // asphalt
         totalEmissiveRadiance += vec3(1.0, 0.5, 0.18) * road * inCity * uStreet;                // sodium glow
       }`);
@@ -707,18 +730,28 @@ const cityFrag = /* glsl */`
       wall *= 0.8 + 0.28 * grime;
       wall *= 1.0 - 0.16 * smoothstep(0.55, 0.8, streak);
       vec3 col;
+      float aOut = 1.0;
     #ifdef PARAPET
       // stepped Omani crenellations cut out of the parapet band
+      // coverage from distance fields + alpha-to-coverage: soft edges up close, and once a notch is
+      // smaller than a pixel the band simply fills in (cut-outs that small only blink)
       float u = abs(fract(along / 1.8) - 0.5);
       float t = vLocalY;
-      if (t > 0.45 && !(t < 0.72 && u < 0.3) && !(u < 0.15)) discard;
-      col = wall * (1.05 + 0.1 * step(0.45, t));
+      float pu = fwidth(along / 1.8), pt = fwidth(t);
+      float dStep = max(t - 0.72, u - 0.3), dTip = u - 0.15;
+      float solid = min(dStep, dTip);                                             // < 0 inside a merlon
+      float cover = t < 0.45 ? 1.0 : 1.0 - smoothstep(-max(pu, pt), max(pu, pt), solid);
+      cover = mix(cover, 1.0, smoothstep(0.12, 0.3, pu));
+      if (cover < 0.02) discard;
+      col = wall * (1.05 + 0.1 * smoothstep(0.45 - pt, 0.45 + pt, t));
+      aOut = cover;
     #else
       if (n.y > 0.5) {
         col = plaster * 0.9 * (amb * 1.7 + sunc * 0.05) * (0.65 + 0.55 * fbm(vWorld.xz * 0.25));
       } else {
         float topDist = vH - yl;
-        wall *= 1.0 - 0.1 * step(fract(y / 3.8), 0.045);                                 // floor slabs
+        float slabW = fwidth(y / 3.8);
+        wall *= 1.0 - 0.1 * (1.0 - smoothstep(0.045 - slabW, 0.045 + slabW, fract(y / 3.8))) * (1.0 - smoothstep(0.1, 0.3, slabW));   // floor slabs, fading before they get thinner than a pixel
         wall *= 1.0 - 0.28 * smoothstep(1.3, 0.45, topDist) * step(0.2, topDist);         // shadow under the cornice
         wall += plaster * amb * 0.9 * smoothstep(0.35, 0.0, topDist);                    // cornice lip
         wall *= 0.5 + 0.5 * smoothstep(0.0, 3.5, yl);                                    // ground contact
@@ -731,9 +764,15 @@ const cityFrag = /* glsl */`
         float r2 = hash(vec3(id, s + 4.1));
         float r3 = hash(vec3(id.x, id.y * 1.7, s + 9.3));
         float qx = abs(f.x - 0.5);
-        float shapeW = max(step(qx, 0.2) * step(0.16, f.y) * step(f.y, 0.6), step(length(vec2(qx, (f.y - 0.6) * 1.25)), 0.2) * step(0.6, f.y));
-        float shapeF = max(step(qx, 0.26) * step(0.1, f.y) * step(f.y, 0.6), step(length(vec2(qx, (f.y - 0.6) * 1.25)), 0.26) * step(0.6, f.y));
-        float sill = step(qx, 0.29) * step(0.07, f.y) * step(f.y, 0.12);
+        // shapes as distance fields, blended across exactly one pixel: no hard edges to crawl or blink
+        float px = max(fwidth(cell.x), fwidth(cell.y));
+        float archY = (f.y - 0.6) * 1.25;
+        float dW = min(max(qx - 0.2, max(0.16 - f.y, f.y - 0.6)), max(length(vec2(qx, archY)) - 0.2, 0.6 - f.y));
+        float dF = min(max(qx - 0.26, max(0.1 - f.y, f.y - 0.6)), max(length(vec2(qx, archY)) - 0.26, 0.6 - f.y));
+        float dS = max(qx - 0.29, max(0.07 - f.y, f.y - 0.12));
+        float shapeW = 1.0 - smoothstep(-px, px, dW);
+        float shapeF = 1.0 - smoothstep(-px, px, dF);
+        float sill = 1.0 - smoothstep(-px, px, dS);
         bool ground = yl < 4.4 && y < 5.0;
         float win = ground ? 0.0 : shapeW;
         float frame = ground ? 0.0 : shapeF - shapeW;
@@ -745,11 +784,11 @@ const cityFrag = /* glsl */`
         // window: recessed glass or carved wooden mashrabiya shutter
         float shutter = step(r3, 0.24);
         vec2 lg = abs(fract(vec2(f.x * 11.0, f.y * 13.0)) - 0.5);
-        float lattice = step(0.3, max(lg.x, lg.y));
+        float lattice = mix(smoothstep(0.3 - px * 13.0, 0.3 + px * 13.0, max(lg.x, lg.y)), 0.64, smoothstep(0.015, 0.04, px));   // fine lattice melts to its average early
         float recess = smoothstep(0.2, 0.14, qx) * smoothstep(0.16, 0.22, f.y);
         vec3 glass = vec3(0.012, 0.013, 0.018) + vec3(0.02, 0.026, 0.045) * (1.0 - uNight) * recess;
         vec3 winCol = mix(glass, vec3(0.07, 0.04, 0.022), shutter * lattice);
-        float lit = step(1.0 - uLit, r) * step(0.1, r2);
+        float lit = smoothstep(1.0 - uLit, 1.06 - uLit, r) * step(0.1, r2);             // windows fade on at dusk instead of popping
         vec3 warm = mix(vec3(1.0, 0.56, 0.26), vec3(1.0, 0.8, 0.58), r2);
         warm = mix(warm, vec3(0.72, 0.84, 1.0) * 0.85, step(0.86, r3) * (1.0 - shutter));
         vec3 nearLight = lit * warm * (0.25 + 0.85 * r2) * mix(1.0, 0.5 * (1.0 - lattice), shutter) * (0.6 + 0.4 * recess);
@@ -771,13 +810,13 @@ const cityFrag = /* glsl */`
         }
       }
     #endif
-      gl_FragColor = vec4(col, 1.0);
+      gl_FragColor = vec4(col, aOut);
       #include <fog_fragment>
     }`;
 const cityUniforms = THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uLit: { value: 0.28 }, uNight: { value: 0 } }]);
 Object.assign(cityUniforms, cloudU);
 const cityMat = new THREE.ShaderMaterial({ uniforms: cityUniforms, fog: true, vertexShader: cityVert, fragmentShader: cityFrag });
-const parapetMat = new THREE.ShaderMaterial({ uniforms: cityUniforms, fog: true, vertexShader: cityVert, fragmentShader: cityFrag, defines: { PARAPET: 1 }, side: THREE.DoubleSide });
+const parapetMat = new THREE.ShaderMaterial({ uniforms: cityUniforms, fog: true, vertexShader: cityVert, fragmentShader: cityFrag, defines: { PARAPET: 1 }, side: THREE.DoubleSide, alphaToCoverage: true });
 
 
 const buildings = [], mosqueSpots = [];
@@ -851,6 +890,29 @@ for (let gx = -13; gx <= 7; gx++) {
     tankMesh.setColorAt(i, rand() < 0.3 ? c.setRGB(0.55, 0.68, 0.8) : c.setRGB(0.85, 0.84, 0.8));
   });
   scene.add(tankMesh);
+
+  // rooftop clutter every Muscat roof has: split-unit AC condensers and satellite dishes (own random stream)
+  {
+    let sd = 4242; const r = () => ((sd = (sd * 1664525 + 1013904223) >>> 0) / 4294967296);
+    const acs = [], dishes = [];
+    for (const [x, z, w, h, d] of buildings) {
+      if (onSite(x, z)) continue;
+      const nAc = Math.floor(r() * 4);
+      for (let k = 0; k < nAc; k++) acs.push([x + (r() - 0.5) * w * 0.8, h, z + (r() - 0.5) * d * 0.8, r() * Math.PI]);
+      if (r() < 0.55) dishes.push([x + (r() - 0.5) * w * 0.7, h, z + (r() - 0.5) * d * 0.7, r() * Math.PI * 2]);
+    }
+    const acGeo = new THREE.BoxGeometry(1.0, 0.7, 0.45); acGeo.translate(0, 0.35, 0);
+    const acMesh = new THREE.InstancedMesh(acGeo, new THREE.MeshStandardMaterial({ color: 0xc9c6bf, roughness: 0.6 }), acs.length);
+    const dishGeo = mergeGeometries([
+      new THREE.CylinderGeometry(0.04, 0.05, 0.9, 6).translate(0, 0.45, 0),
+      new THREE.SphereGeometry(0.55, 14, 6, 0, Math.PI * 2, 0, 0.9).rotateX(-Math.PI / 2 - 0.5).translate(0, 1.0, 0.1),
+    ]);
+    const dishMesh = new THREE.InstancedMesh(dishGeo, new THREE.MeshStandardMaterial({ color: 0xd8d6d0, roughness: 0.5, side: THREE.DoubleSide }), dishes.length);
+    const q = new THREE.Quaternion(), s = new THREE.Vector3(1, 1, 1), p = new THREE.Vector3();
+    acs.forEach(([x, y, z, a], i) => { m.compose(p.set(x, y, z), q.setFromAxisAngle(UP, a), s); acMesh.setMatrixAt(i, m); });
+    dishes.forEach(([x, y, z, a], i) => { m.compose(p.set(x, y, z), q.setFromAxisAngle(UP, a), s); dishMesh.setMatrixAt(i, m); });
+    scene.add(acMesh, dishMesh);
+  }
 }
 
 
@@ -1177,6 +1239,7 @@ const lightsMat = new THREE.ShaderMaterial({
         float t = mod(uTime * aMove.z + floor(aSize) * 7.31, aMove.w);
         p.x += aMove.x * t; p.z += aMove.y * t;
         vFade = smoothstep(0.0, 80.0, t) * smoothstep(aMove.w, aMove.w - 80.0, t);
+        vFade *= 1.0 - step(abs(p.x), 45.0) * step(-715.0, p.z) * step(p.z, -470.0);     // no traffic across the tower plaza
       }
       vec4 mv = modelViewMatrix * vec4(p, 1.0);
       gl_Position = projectionMatrix * mv;
@@ -1200,23 +1263,27 @@ const lightsMat = new THREE.ShaderMaterial({
     pos.push(x, y, z); col.push(...c); mov.push(...m); size.push(Math.floor(rand() * 500) + s);
   };
   const onLand = (x, z) => x < coastX(z) - 40;
+  const posts = [];
   const X0 = -13 * CELL - 30, X1 = 7 * CELL + 30, Z0 = -30 * CELL - 30, Z1 = 8 * CELL + 30;
   const lamp = [1.5, 0.9, 0.45], blvd = [2.2, 1.35, 0.7], green = [0.1, 1.9, 0.75], lantern = [2.4, 1.3, 0.55];
   const step = isMobile ? 36 : 24;
   for (let gx = -13; gx <= 8; gx++) {
     const x = gx * CELL - 30;
     for (let z = Z0; z < Z1; z += step) {
-      if (onLand(x + 6, z)) push(x + 6, 7, z, lamp, 0.45);
-      if (onLand(x - 6, z)) push(x - 6, 7, z + step / 2, lamp, 0.45);
+      if (onLand(x + 6, z)) { push(x + 6, 7, z, lamp, 0.45); posts.push([x + 7.5, z, 7, -1, 0]); }
+      if (onLand(x - 6, z)) { push(x - 6, 7, z + step / 2, lamp, 0.45); posts.push([x - 7.5, z + step / 2, 7, 1, 0]); }
     }
   }
   for (let gz = -30; gz <= 9; gz++) {
     const z = gz * CELL - 30;
-    for (let x = X0; x < X1; x += step) if (onLand(x, z)) push(x, 7, z + 6, lamp, 0.45);
+    for (let x = X0; x < X1; x += step) if (onLand(x, z)) { push(x, 7, z + 6, lamp, 0.45); posts.push([x, z + 7.5, 7, 0, -1]); }
   }
-  for (let z = Z0; z < Z1; z += 16) { push(-26, 9, z, blvd, 0.55); push(26, 9, z + 8, blvd, 0.55); }
+  for (let z = Z0; z < Z1; z += 16) {
+    push(-26, 9, z, blvd, 0.55); push(26, 9, z + 8, blvd, 0.55);
+    if (Math.abs(z - TOWER_Z) > 100) posts.push([-27.8, z, 9, 1, 0], [27.8, z + 8, 9, -1, 0]);
+  }
   for (let z = TOWER_Z + 30; z < TOWER_Z + 96; z += 6) { push(-9, 0.6, z, green, 0.3); push(9, 0.6, z, green, 0.3); }   // Tamlik green leads to the tower
-  for (let z = Z0, i = 0; z < Z1; z += 14, i++) push(coastX(z) - 26, 6, z, i % 4 ? blvd : green, 0.5);   // corniche promenade, every fourth lamp in brand green
+  for (let z = Z0, i = 0; z < Z1; z += 14, i++) { push(coastX(z) - 26, 6, z, i % 4 ? blvd : green, 0.5); posts.push([coastX(z) - 24.6, z, 6, -1, 0]); }   // corniche promenade, every fourth lamp in brand green
   for (const [x, z] of mosqueSpots) push(x + 9, 32, z + 9, green, 0.7);                     // lit minaret tips
   for (const [x, z] of [[0, 62], [-78, -58], [78, -58], [-78, 58], [78, 58]]) push(GRAND.x + x, x === 0 ? 100 : 55, GRAND.z + z, green, 0.9);
   for (const d of dhows) push(d.position.x, 5, d.position.z, lantern, 0.6);
@@ -1249,6 +1316,87 @@ const lightsMat = new THREE.ShaderMaterial({
   const pts = new THREE.Points(g, lightsMat);
   pts.frustumCulled = false;
   scene.add(pts);
+
+  // lamp posts under every street light: slim dark-bronze poles with a curved arm and a flat head
+  {
+    const postMat = new THREE.MeshStandardMaterial({ color: 0x2a2724, roughness: 0.45, metalness: 0.7 });
+    const pole = new THREE.CylinderGeometry(0.09, 0.14, 1, 8); pole.translate(0, 0.5, 0);
+    const arm = mergeGeometries([
+      new THREE.BoxGeometry(1.55, 0.08, 0.08).translate(0.75, 0, 0),                  // arm reaching over the road
+      new THREE.BoxGeometry(0.62, 0.1, 0.26).translate(1.45, -0.06, 0),              // luminaire head
+      new THREE.CylinderGeometry(0.16, 0.2, 0.3, 8).translate(0, -0.15, 0),          // collar
+    ]);
+    const poles = new THREE.InstancedMesh(pole, postMat, posts.length), arms = new THREE.InstancedMesh(arm, postMat, posts.length);
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3();
+    posts.forEach(([x, z, h, ax, az], i) => {
+      m.compose(p.set(x, 0, z), q.identity(), s.set(1, h + 0.1, 1)); poles.setMatrixAt(i, m);
+      q.setFromAxisAngle(UP, Math.atan2(-az, ax));
+      m.compose(p.set(x, h + 0.12, z), q, s.set(1, 1, 1)); arms.setMatrixAt(i, m);
+    });
+    poles.frustumCulled = arms.frustumCulled = false;
+    scene.add(poles, arms);
+  }
+
+  // cars: a body for every pair of moving head/tail lights, driven by the same clock and formula as the lights
+  {
+    const carIdx = [];
+    for (let i = 0; i < mov.length / 4; i++) if (mov[i * 4 + 2] > 0) carIdx.push(i);
+    const body = mergeGeometries([
+      new RoundedBoxGeometry(1.84, 0.72, 4.5, 2, 0.16).translate(0, 0.58, 0),        // lower body
+      new RoundedBoxGeometry(1.6, 0.6, 2.4, 2, 0.2).translate(0, 1.2, -0.15),        // cabin
+    ]);
+    const geo = new THREE.InstancedBufferGeometry().copy(body);
+    geo.instanceCount = carIdx.length;
+    const at = (src, k) => new THREE.InstancedBufferAttribute(new Float32Array(carIdx.flatMap((i) => src.slice(i * k, i * k + k))), k);
+    geo.setAttribute('iPos', at(pos, 3)); geo.setAttribute('iMove', at(mov, 4)); geo.setAttribute('iSize', at(size, 1)); geo.setAttribute('iCol', at(col, 3));
+    const carMat = new THREE.ShaderMaterial({
+      fog: true,
+      uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 }, uNight: { value: 0 } }]),
+      vertexShader: /* glsl */`
+        attribute vec3 iPos; attribute vec4 iMove; attribute float iSize; attribute vec3 iCol;
+        uniform float uTime;
+        varying vec3 vN; varying vec3 vPaint; varying float vLocalZ; varying float vUp; varying float vHead;
+        #include <fog_pars_vertex>
+        void main(){
+          float t = mod(uTime * iMove.z + floor(iSize) * 7.31, iMove.w);        // same motion as the light points
+          vec2 dir = iMove.xy;
+          float head = step(iCol.g, iCol.r * 0.5) < 0.5 ? 1.0 : 0.0;           // white lights lead the car, red ones trail it
+          vec3 c = iPos + vec3(dir.x * t, -0.8, dir.y * t) - vec3(dir.x, 0.0, dir.y) * (head > 0.5 ? 2.2 : -2.2);
+          float grow = smoothstep(0.0, 60.0, t) * smoothstep(iMove.w, iMove.w - 60.0, t);   // in and out at the city's edge
+          grow *= 1.0 - step(abs(c.x), 45.0) * step(-715.0, c.z) * step(c.z, -470.0);          // and never across the tower plaza
+          float ang = atan(dir.x, dir.y);
+          mat2 R = mat2(cos(ang), -sin(ang), sin(ang), cos(ang));
+          vec3 p = position * grow;
+          p.xz = R * p.xz;
+          vN = normal; vN.xz = R * vN.xz;
+          vLocalZ = position.z; vUp = position.y; vHead = head;
+          float h = fract(sin(floor(iSize) * 91.7) * 4375.85);
+          vPaint = h < 0.4 ? vec3(0.8, 0.8, 0.78) : h < 0.6 ? vec3(0.03) : h < 0.8 ? vec3(0.45, 0.46, 0.47) : vec3(0.52, 0.43, 0.32);
+          vec4 mvPosition = viewMatrix * vec4(c + p, 1.0);
+          gl_Position = projectionMatrix * mvPosition;
+          #include <fog_vertex>
+        }`,
+      fragmentShader: /* glsl */`
+        uniform float uNight;
+        varying vec3 vN; varying vec3 vPaint; varying float vLocalZ; varying float vUp; varying float vHead;
+        #include <fog_pars_fragment>
+        void main(){
+          vec3 n = normalize(vN);
+          float sun = max(dot(n, normalize(vec3(-0.36, 0.3, -1.0))), 0.0) * (1.0 - uNight);
+          float sky = 0.5 + 0.5 * n.y;
+          vec3 col = vPaint * (vec3(0.07, 0.075, 0.09) * sky + vec3(1.0, 0.6, 0.3) * 0.9 * sun);
+          col += vPaint * vec3(1.0, 0.55, 0.25) * 0.05 * uNight * (1.0 - n.y);                 // sodium street glow from below
+          float glass = step(0.95, vUp) * step(abs(vLocalZ + 0.15), 1.1);
+          col = mix(col, vec3(0.012, 0.014, 0.02) + 0.05 * sky * (1.0 - uNight), glass * 0.85);
+          gl_FragColor = vec4(col, 1.0);
+          #include <fog_fragment>
+        }`,
+    });
+    const cars = new THREE.Mesh(geo, carMat);
+    cars.frustumCulled = false; cars.userData.noAO = true;              // moved in the shader, so the AO pass can't see where they are
+    scene.add(cars);
+    lightsMat.userData.cars = carMat;
+  }
 }
 
 
@@ -1266,7 +1414,13 @@ const finMat = new THREE.MeshStandardMaterial({ color: 0xc6a168, roughness: 0.42
 const coreMat = new THREE.MeshStandardMaterial({ color: 0x10141b, roughness: 0.24, metalness: 0.9, envMapIntensity: 0.75 });
 // the low sun sits behind the tower on the boulevard axis: damp its direct glint on the metal and glass
 const dampSunGlint = (sh) => sh.fragmentShader.replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\nreflectedLight.directSpecular *= 0.12;');
-finMat.onBeforeCompile = (sh) => { sh.fragmentShader = dampSunGlint(sh); };
+// from far away the fins are thinner than a pixel and strobe against the lit floors behind them; there they turn
+// partly see-through (alpha-to-coverage, so no sorting), which averages fins and glass the way the eye would
+finMat.alphaToCoverage = true;
+finMat.onBeforeCompile = (sh) => {
+  sh.fragmentShader = dampSunGlint(sh).replace('#include <dithering_fragment>',
+    '#include <dithering_fragment>\ngl_FragColor.a = 1.0 - 0.7 * smoothstep(220.0, 650.0, length(vViewPosition));');
+};
 // instance colour drives the interior glow of each floor instead of tinting the glass
 // and is broken into individual rooms so floors read as lived-in rather than flat panels
 coreMat.onBeforeCompile = (sh) => {
@@ -1280,7 +1434,10 @@ coreMat.onBeforeCompile = (sh) => {
         float lvl = floor(vWPos.y / 4.2);
         float rh = fract(sin(room * 12.9898 + lvl * 78.233) * 43758.5453);
         float fy = fract(vWPos.y / 4.2);
-        totalEmissiveRadiance += vColor.rgb * mix(0.12, 1.35, rh * rh) * (0.65 + 0.6 * smoothstep(0.2, 0.95, fy));
+        // far away, many rooms share a pixel: blend to their average glow instead of letting them blink
+        float far = smoothstep(0.08, 0.35, fwidth((vWPos.x - vWPos.z) / 5.5));
+        float glow = mix(mix(0.12, 1.35, rh * rh) * (0.65 + 0.6 * smoothstep(0.2, 0.95, fy)), 0.6, far);
+        totalEmissiveRadiance += vColor.rgb * glow;
       #endif`);
 };
 
@@ -1490,11 +1647,17 @@ function canvasTex(w, h, draw) {
 // lit Tamlik sign on all four faces of the tower crown
 {
   const top = LEVELS * LH, rot = LEVELS * TWIST;
-  const green = new THREE.MeshBasicMaterial({ color: new THREE.Color(0.03, 1.15, 0.5), side: THREE.DoubleSide });
-  const white = new THREE.MeshBasicMaterial({ color: new THREE.Color(1.15, 1.1, 1.0), side: THREE.DoubleSide });
+  // a mipmapped texture rather than geometry: seen from across the city the letters are a few pixels tall,
+  // and texture filtering shrinks them smoothly where thin shapes would shimmer
+  const tex = canvasTex(2048, 600, (c, w, h) => {
+    c.clearRect(0, 0, w, h);
+    drawLogo2D(c, 24, 24, w - 48, { 'roof-left': '#e8e2d6', 'roof-right': '#21d67a', wordmark: '#21d67a' });
+  });
+  tex.generateMipmaps = true; tex.minFilter = THREE.LinearMipmapLinearFilter; tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  const signMat = new THREE.MeshBasicMaterial({ map: tex, color: new THREE.Color(1.5, 1.5, 1.5), transparent: true, depthWrite: false, side: THREE.DoubleSide });
   const ring = new THREE.Group(); ring.position.y = top + 6.4; ring.rotation.y = rot; tower.add(ring);
   for (let s = 0; s < 4; s++) {
-    const a = s * Math.PI / 2, sign = flatLogo(27, { 'roof-left': white, 'roof-right': green, wordmark: green });
+    const a = s * Math.PI / 2, sign = new THREE.Mesh(new THREE.PlaneGeometry(27, 27 * 600 / 2048), signMat);
     sign.position.set(Math.sin(a) * (HALF + 0.75), 0, Math.cos(a) * (HALF + 0.75)); sign.rotation.y = a;
     ring.add(sign);
   }
@@ -1904,8 +2067,8 @@ composer.setPixelRatio(DPR);
 composer.setSize(innerWidth, innerHeight);
 composer.addPass(new RenderPass(scene, camera));
 // ambient occlusion: soft contact shadows where surfaces meet (building bases, furniture, battlements).
-// Glass, glows, lights and the sky are left out so they never cast false shadows. Off on phones.
-if (!isMobile) {
+// Glass, glows, lights and the sky are left out so they never cast false shadows. Off on phones (and with ?noao).
+if (!isMobile && !params.has('noao')) {
   class SceneAO extends GTAOPass {
     overrideVisibility() {
       const cache = this._visibilityCache;
@@ -2064,6 +2227,7 @@ const soundtrack = (() => {
   if (RECORD || params.has('mute')) return { restart() {} };
   const a = new Audio('assets/audio/loop.m4a');
   a.preload = 'auto'; a.volume = 1;
+  window.__soundtrack = a;                                   // for diagnostics: paused / currentTime
   let unlocked = false;
   const loopTime = () => Math.max(0, time - logoT0);
   const start = () => { a.currentTime = Math.min(loopTime(), 65); return a.play().then(() => { unlocked = true; }); };
@@ -2127,6 +2291,8 @@ function frame() {
   surfMat.uniforms.uNight.value = night;
   for (const d of dhows) { d.position.y = 0.2 + Math.sin(time * 1.1 + d.userData.phase) * 0.25; d.rotation.z = Math.sin(time * 0.8 + d.userData.phase) * 0.035; }
   lightsMat.uniforms.uTime.value = time;
+  lightsMat.userData.cars.uniforms.uTime.value = time;
+  lightsMat.userData.cars.uniforms.uNight.value = night;
   const ft = DEBUG_FT ?? time - filmT0;
   flock.update(ft);
   drones.update(ft);
