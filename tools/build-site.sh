@@ -6,12 +6,15 @@ cd "$(dirname "$0")/.."
 PM=${1:-renders/master_portrait.mp4}; LM=${2:-renders/master_landscape.mp4}
 P4=renders/master_portrait_4k.mp4; L4=renders/master_landscape_4k.mp4
 OUT=site; ENC=renders/enc; mkdir -p $ENC; rm -rf $OUT/v; mkdir -p $OUT/v
-X264="-c:v libx264 -preset veryslow -profile:v high -pix_fmt yuv420p -sc_threshold 0 -movflags +faststart -an -colorspace bt709 -color_primaries bt709 -color_trc bt709"
+X264="-c:v libx264 -preset veryslow -profile:v high -pix_fmt yuv420p -sc_threshold 0 -movflags +faststart -colorspace bt709 -color_primaries bt709 -color_trc bt709"
+# the soundtrack (tools/mix-audio.mjs) is exactly one loop long, so it loops with the picture
+AUDIO=assets/audio/loop.m4a
+if [ -f "$AUDIO" ]; then AIN="-i $AUDIO"; AMAP="-map 0:v:0 -map 1:a:0 -c:a copy -shortest"; else AIN=""; AMAP="-an"; fi
 enc() { # master name w h fps crf maxrate level
   local m=$1 n=$2 w=$3 h=$4 fps=$5 crf=$6 mr=$7 lvl=$8
   [ -f "$m" ] || return 0
-  [ $ENC/$n.mp4 -nt "$m" ] && { echo "$n up to date"; return 0; }
-  ffmpeg -loglevel error -y -i "$m" -vf "fps=$fps,scale=$w:$h:flags=lanczos" $X264 -level $lvl -crf $crf -maxrate $mr -bufsize $((${mr%M}*2))M -g $((fps*2)) -keyint_min $((fps*2)) -r $fps $ENC/$n.mp4
+  [ $ENC/$n.mp4 -nt "$m" ] && [ ! "$AUDIO" -nt $ENC/$n.mp4 ] && { echo "$n up to date"; return 0; }
+  ffmpeg -loglevel error -y -i "$m" $AIN $AMAP -vf "fps=$fps,scale=$w:$h:flags=lanczos" $X264 -level $lvl -crf $crf -maxrate $mr -bufsize $((${mr%M}*2))M -g $((fps*2)) -keyint_min $((fps*2)) -r $fps $ENC/$n.mp4
   echo "$n $(du -h $ENC/$n.mp4 | cut -f1)"
 }
 if [ -f "$PM" ]; then
@@ -40,5 +43,5 @@ for side, pre in (('portrait', 'p'), ('landscape', 'l')):
 json.dump(film, open(f'{out}/film.json', 'w'), indent=1)
 print(json.dumps({s: {k: sum(p['bytes'] for p in v['parts']) // 1048576 for k, v in d.items()} for s, d in film.items()}), 'MiB')
 PY
-mkdir -p $OUT/live && cp index.html $OUT/live/index.html
+mkdir -p $OUT/live && cp index.html $OUT/live/index.html && rm -rf $OUT/live/assets && cp -r assets $OUT/live/assets && rm -rf $OUT/live/assets/audio/src
 date -u +%Y%m%d%H%M%S > $OUT/version.txt

@@ -1,6 +1,8 @@
 // Offline, frame-exact capture of the film.
 //   node tools/record.mjs --url URL --w 1080 --h 1920 --fps 60 [--every N] [--start S] [--end S]
-//                         [--frames DIR | --mp4 OUT.mp4] [--scale 1]
+//                         [--frames DIR | --mp4 OUT.mp4] [--scale 1] [--blur 4] [--shutter 0.5]
+// --blur N renders N moments inside each frame's shutter (0.5 = a 180° film shutter) and blends them:
+// real motion blur, and it also calms shimmer on fine detail. Costs N times the render time (--mp4 only).
 // Without --end it records exactly one loop: from the first logo intro to the next one.
 import { launch, connect } from './cdp.mjs';
 import { readFileSync, mkdirSync, writeFileSync } from 'node:fs';
@@ -10,6 +12,7 @@ import { fileURLToPath } from 'node:url';
 
 const A = Object.fromEntries(process.argv.slice(2).join(' ').split('--').filter(Boolean).map(s => { const [k, ...v] = s.trim().split(/\s+/); return [k, v.join(' ') || true]; }));
 const W = +(A.w || 1080), H = +(A.h || 1920), FPS = +(A.fps || 60), EVERY = +(A.every || 1), SCALE = +(A.scale || 1);
+const BLUR = A.mp4 ? Math.max(1, Math.round(+(A.blur || 1))) : 1, SHUTTER = +(A.shutter || 0.5);
 const here = dirname(fileURLToPath(import.meta.url));
 // with no --url, serve this repo on a free local port and record ./index.html
 let url = A.url;
@@ -18,7 +21,7 @@ if (!url) {
   const { readFile } = await import('node:fs/promises');
   const { extname, resolve } = await import('node:path');
   const root = resolve(here, '..');
-  const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json' };
+  const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json', '.jpg': 'image/jpeg', '.gltf': 'model/gltf+json', '.bin': 'application/octet-stream', '.m4a': 'audio/mp4', '.ogg': 'audio/ogg' };
   const srv = createServer(async (req, res) => {
     const path = resolve(root, '.' + decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/\/$/, '/index.html'));
     if (!path.startsWith(root)) { res.writeHead(403); return res.end(); }
@@ -54,8 +57,12 @@ const dt = 1000 / FPS;
 const start = Math.round((+(A.start || 0)) * FPS), endFixed = A.end ? Math.round(+A.end * FPS) : null;
 let ff = null;
 if (A.mp4) {
-  ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS / EVERY), '-i', '-',
-    ...(SCALE !== 1 && !A.native ? ['-vf', `scale=${W}:${H}:flags=lanczos`] : []),   // --native keeps the full device-pixel size (4K)
+  const vf = [];
+  // average each frame's N sub-frames: tmix blends the last N, then keep only the one that closes each frame
+  if (BLUR > 1) vf.push(`tmix=frames=${BLUR}`, `trim=start_frame=${BLUR - 1}`, `framestep=${BLUR}`, `setpts=N/(${FPS / EVERY}*TB)`);
+  if (SCALE !== 1 && !A.native) vf.push(`scale=${W}:${H}:flags=lanczos`);   // --native keeps the full device-pixel size (4K)
+  ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS / EVERY * BLUR), '-i', '-',
+    ...(vf.length ? ['-vf', vf.join(','), '-r', String(FPS / EVERY)] : []),
     '-c:v', 'libx264', '-preset', 'medium', '-crf', A.crf || '10', '-pix_fmt', 'yuv420p', '-colorspace', 'bt709', '-color_primaries', 'bt709', '-color_trc', 'bt709', A.mp4], { stdio: ['pipe', 'inherit', 'inherit'] });
 }
 if (A.frames) mkdirSync(A.frames, { recursive: true });
@@ -70,10 +77,13 @@ for (;; k++) {
   if (end !== null && k >= end) break;
   if (k < start || (k - start) % EVERY) continue;
   if (A.probe) { console.log(JSON.stringify(await c.evaluate('window.__probe()'))); shots++; continue; }
-  const { data } = await c.send('Page.captureScreenshot', A.jpeg ? { format: 'jpeg', quality: +A.jpeg, optimizeForSpeed: true } : { format: 'png', optimizeForSpeed: true });
-  const buf = Buffer.from(data, 'base64');
-  if (ff) { if (!ff.stdin.write(buf)) await new Promise(r => ff.stdin.once('drain', r)); }
-  if (A.frames) writeFileSync(join(A.frames, `f${String(k).padStart(5, '0')}.png`), buf);
+  for (let i = 0; i < BLUR; i++) {
+    if (i) await c.evaluate(`__step(${k * dt + i / BLUR * SHUTTER * dt})`);   // later moments inside this frame's shutter
+    const { data } = await c.send('Page.captureScreenshot', A.jpeg ? { format: 'jpeg', quality: +A.jpeg, optimizeForSpeed: true } : { format: 'png', optimizeForSpeed: true });
+    const buf = Buffer.from(data, 'base64');
+    if (ff) { if (!ff.stdin.write(buf)) await new Promise(r => ff.stdin.once('drain', r)); }
+    if (A.frames && !i) writeFileSync(join(A.frames, `f${String(k).padStart(5, '0')}.png`), buf);
+  }
   shots++;
   if (shots % 60 === 0) console.error(`frame ${k} (${(k / FPS).toFixed(1)}s) ${((Date.now() - tStart) / shots).toFixed(0)} ms/shot`);
 }

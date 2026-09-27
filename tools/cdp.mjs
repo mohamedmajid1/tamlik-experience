@@ -8,6 +8,7 @@ export const GPU_FLAGS = {
   vulkan: ['--use-angle=vulkan', '--enable-features=Vulkan', '--ignore-gpu-blocklist'],
   gl: ['--use-gl=angle', '--use-angle=gl', '--ignore-gpu-blocklist'],
   egl: ['--use-gl=angle', '--use-angle=gl-egl', '--ignore-gpu-blocklist'],
+  d3d11: ['--use-angle=d3d11', '--ignore-gpu-blocklist'],   // Windows
   swiftshader: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
 };
 
@@ -17,7 +18,7 @@ export async function launch({ port = 9333, w = 1080, h = 1920, gpu = 'vulkan', 
     `--window-size=${w},${h}`, '--hide-scrollbars', '--mute-audio', '--no-first-run', '--no-default-browser-check',
     '--disable-background-timer-throttling', '--disable-renderer-backgrounding', '--disable-backgrounding-occluded-windows',
     '--force-color-profile=srgb', ...GPU_FLAGS[gpu], ...extra, 'about:blank'];
-  const proc = spawn('/usr/bin/google-chrome', args, { stdio: ['ignore', 'ignore', 'pipe'] });
+  const proc = spawn(process.env.CHROME || '/usr/bin/google-chrome', args, { stdio: ['ignore', 'ignore', 'pipe'] });
   let err = ''; proc.stderr.on('data', d => { err += d; if (err.length > 20000) err = err.slice(-10000); });
   for (let i = 0; i < 100; i++) {
     try {

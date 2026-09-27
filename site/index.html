@@ -63,13 +63,28 @@
     V.classList.toggle('cover', Math.abs(a - b) / b < 0.08);   // same shape as the film: fill edge to edge
   }
 
+  // Sound: the film carries its soundtrack. It first tries to play with sound (a kiosk browser set to allow
+  // autoplay with sound, e.g. Fully Kiosk, plays it straight away); if the browser refuses, it plays muted and
+  // the first tap or key press turns the sound on. ?mute keeps it silent.
+  const wantSound = !Q.has('mute');
+  let soundOn = false;
   // Autoplay: muted video normally starts by itself. Where the browser refuses (battery saver,
   // data saver, some TV browsers), show a play button instead of a frozen first frame.
   async function play() {
-    V.muted = true; V.defaultMuted = true;
+    if (wantSound && !soundOn) {
+      V.muted = false;
+      try { await V.play(); soundOn = true; blocked = false; tap.classList.remove('show'); return; } catch (e) {}
+    }
+    V.muted = !soundOn; V.defaultMuted = !soundOn;
     try { await V.play(); blocked = false; tap.classList.remove('show'); }
     catch (e) { if (e && e.name === 'NotAllowedError') { blocked = true; tap.classList.add('show'); } }
   }
+  function unmute() {
+    if (!wantSound || soundOn) return;
+    V.muted = false;
+    V.play().then(() => { soundOn = true; }).catch(() => { V.muted = true; V.play().catch(() => {}); });
+  }
+  for (const ev of ['pointerdown', 'keydown', 'touchend']) addEventListener(ev, unmute);
   tap.addEventListener('click', play);
   addEventListener('pointerdown', () => { if (blocked || V.paused) play(); });
   // Fullscreen like the Al Yaqoot display: the first tap on the screen takes the page fullscreen (no install

@@ -8,9 +8,9 @@ cd "$(dirname "$0")/.."
 mkdir -p renders
 export SCRATCH=${SCRATCH:-$HOME/.cache/tamlik-rec}; mkdir -p "$SCRATCH"
 if [ -z "${SKIP_RENDER:-}" ]; then
-  node tools/record.mjs --w 1080 --h 1920 --scale 2 --gpu gl --crf 8 --jpeg 95 --mp4 renders/master_portrait.mp4
-  node tools/record.mjs --w 1920 --h 1080 --scale 2 --gpu gl --crf 8 --jpeg 95 --mp4 renders/master_landscape.mp4
-  node tools/record.mjs --w 1080 --h 1920 --scale 2 --native 1 --gpu gl --crf 10 --jpeg 97 --mp4 renders/master_portrait_4k.mp4
+  node tools/record.mjs --w 1080 --h 1920 --scale 2 --blur ${BLUR:-4} --gpu gl --crf 8 --jpeg 95 --mp4 renders/master_portrait.mp4
+  node tools/record.mjs --w 1920 --h 1080 --scale 2 --blur ${BLUR:-4} --gpu gl --crf 8 --jpeg 95 --mp4 renders/master_landscape.mp4
+  node tools/record.mjs --w 1080 --h 1920 --scale 2 --native 1 --blur ${BLUR:-4} --gpu gl --crf 10 --jpeg 97 --mp4 renders/master_portrait_4k.mp4
 fi
 tools/build-site.sh
 date -u +%Y%m%d%H%M%S > site/version.txt

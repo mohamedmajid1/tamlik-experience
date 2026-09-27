@@ -24,9 +24,24 @@ Links: `/` full quality · `/4k` 4K test · `/30` 30 fps · `/?nofull` never go 
 - **Loop-safe logo:** the logo's sway restarts with every intro. The logo renderer uses 2× supersampling instead of MSAA, because MSAA made the wordmark's front faces flicker dark on some GPUs.
 - **`?record` mode:** used by the recorder (hooks: `window.__ready`, `window.__marks`, `window.__probe`).
 
+## Studio pass (brand, assets, sound, motion blur)
+
+- **Tamlik in the city:** three building sites with branded hoardings and cranes, a lit sign on the tower crown, brand-green lights to the tower and along the corniche, and a drone show that draws the logo in the night sky during the closing aerial. The website, Instagram, LinkedIn/Facebook and phone number fade in over the drone show (no pause).
+- **Ready-made assets** (`assets/`, fetched by `node tools/fetch-assets.mjs`): Poly Haven furniture, plants and vases in the penthouse; real marble, walnut, rock, sand, clay plaster, pavers and concrete textures. Rock, sand and plaster are projected in world space ("triplanar"), so cliffs and walls never stretch.
+- **Shading:** ambient occlusion (GTAO) grounds buildings and furniture; sharper sea reflections.
+- **Motion blur:** `record.mjs --blur 4` renders 4 moments inside each frame's 180° shutter and blends them: real film motion blur, and it also removes shimmer on fine detail. `release.sh` uses it by default, so a full release takes about 4× longer (`BLUR=1 tools/release.sh` for a quick one).
+- **Sound:** `assets/audio/loop.m4a` is one seamless 65.7 s loop built by `node tools/mix-audio.mjs`: calm music, sounds placed on the film's timeline (wind on the aerials, the city at night on the boulevard, gulls with the flock, the city muffled through the penthouse glass, surf at the fort, soft whooshes on the big camera moves, a tuned chime for the logo and the drone show). `build-site.sh` adds it to every video. **If the film's timing changes, the loop length changes:** `record.mjs` prints it ("loop closes at …"); update `L` in `tools/mix-audio.mjs` and rebuild the soundtrack.
+- **Sound on the screens:** browsers never start sound by themselves. The player tries sound first, so a kiosk browser set to allow autoplay with sound (e.g. Fully Kiosk Browser) plays it with no touch; otherwise it plays muted and the first tap turns the sound on. `?mute` keeps it silent. The live 3D page behaves the same way.
+
+### Credits (all public domain, free for commercial use)
+
+- Textures and models: [Poly Haven](https://polyhaven.com) (CC0)
+- Music: "Cosmic Waves" by [HoliznaCC0](https://archive.org/details/holizna-cc-0-cosmic-waves) (CC0)
+- Field recordings from [Radio Aporee](https://aporee.org) (Public Domain Mark): beach with waves and gulls near Lisbon by Felix Blume; Tunis at night from a hotel roof by Frank Schulte
+
 ## Making a new version
 
-Edit `index.html`, preview it by opening the file (or `?p=0.5` to jump to a shot), then:
+Edit `index.html` and preview it from a local web server (the models and textures don't load from a double-clicked file), e.g. `npx serve`, then open it (`?p=0.5` jumps to a shot, `&ft=58` pins the film clock for the drone show). Then:
 
 ```bash
 tools/stills.sh sheet 540 960        # quick contact sheet of the whole loop (portrait)
