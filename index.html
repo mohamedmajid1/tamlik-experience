@@ -109,7 +109,10 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 
 const params = new URLSearchParams(location.search);
 const DEBUG_P = params.has('p') ? parseFloat(params.get('p')) : null;   // ?p=0.5 jumps straight to a shot
-const isMobile = matchMedia('(max-width: 900px)').matches || matchMedia('(pointer: coarse)').matches;
+const RECORD = params.has('record');
+const FOV_K = params.has('fovk') ? parseFloat(params.get('fovk')) : 0.5;                                     // offline frame capture (tools/record.mjs)
+window.__marks = [];
+const isMobile = !params.has('record') && (matchMedia('(max-width: 900px)').matches || matchMedia('(pointer: coarse)').matches);
 const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const lerp = THREE.MathUtils.lerp;
@@ -188,7 +191,7 @@ try {
   document.getElementById('loader')?.remove();
   throw e;
 }
-const DPR = Math.min(devicePixelRatio, isMobile ? 1.25 : 1.75);
+const DPR = RECORD ? devicePixelRatio : Math.min(devicePixelRatio, isMobile ? 1.25 : 1.75);   // recording supersamples via deviceScaleFactor
 renderer.setPixelRatio(DPR);
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -197,17 +200,54 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 const scene = new THREE.Scene();
-const FOG = new THREE.Color(0.03, 0.024, 0.034);
-scene.fog = new THREE.FogExp2(FOG, 0.0005);
+const SUN = new THREE.Vector3(-0.36, 0.03, -1).normalize();
+
+/* ---------------------------------------------------------
+   Colour script: one palette per act, blended by uNight.
+   Golden hour (warm sun, lavender shade) → blue hour (amber
+   windows against cobalt) → night (sodium streets, indigo sky).
+   The haze takes the sky's colour: gold toward the sun, cool
+   lavender away from it, so depth reads as colour, not black.
+   --------------------------------------------------------- */
+const PAL = {
+  fogCool:  [new THREE.Color(0.1, 0.102, 0.125),  new THREE.Color(0.018, 0.02, 0.036)],
+  fogWarm:  [new THREE.Color(0.4, 0.25, 0.13),   new THREE.Color(0.15, 0.07, 0.045)],
+};
+const FOG = PAL.fogCool[0].clone();
+scene.fog = new THREE.FogExp2(FOG, 0.00031);
+const atmoU = { uFogWarm: { value: PAL.fogWarm[0].clone() } };
+{
+  const sv = `vec3(${SUN.x.toFixed(5)}, ${SUN.y.toFixed(5)}, ${SUN.z.toFixed(5)})`;
+  THREE.ShaderChunk.fog_pars_vertex = '#ifdef USE_FOG\n varying float vFogDepth; varying vec3 vFogDir;\n#endif';
+  THREE.ShaderChunk.fog_vertex = '#ifdef USE_FOG\n vFogDepth = - mvPosition.z; vFogDir = (vec4(mvPosition.xyz, 0.0) * viewMatrix).xyz;\n#endif';
+  THREE.ShaderChunk.fog_pars_fragment = `#ifdef USE_FOG
+    uniform vec3 fogColor; uniform vec3 uFogWarm; varying float vFogDepth; varying vec3 vFogDir;
+    #ifdef FOG_EXP2
+      uniform float fogDensity;
+    #else
+      uniform float fogNear; uniform float fogFar;
+    #endif
+  #endif`;
+  THREE.ShaderChunk.fog_fragment = `#ifdef USE_FOG
+    #ifdef FOG_EXP2
+      float fogFactor = 1.0 - exp( - fogDensity * fogDensity * vFogDepth * vFogDepth );
+    #else
+      float fogFactor = smoothstep( fogNear, fogFar, vFogDepth );
+    #endif
+    float fSun = max(dot(normalize(vFogDir), ${sv}), 0.0);
+    vec3 fogC = mix(fogColor, uFogWarm, pow(fSun, 5.0)) + uFogWarm * 0.4 * pow(fSun, 24.0);
+    gl_FragColor.rgb = mix( gl_FragColor.rgb, fogC, fogFactor );
+  #endif`;
+}
 
 const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.3, 9000);
-const SUN = new THREE.Vector3(-0.36, 0.03, -1).normalize();
 
 /* ---------------------------------------------------------
    Cloud shadows — one drifting fbm field shared by every
    surface shader: 1 in sunlight, down to ~0.3 under a cloud
    --------------------------------------------------------- */
 const cloudU = { uCloudT: { value: 0 }, uCloudDay: { value: 1 } };
+const streetU = { uStreet: { value: 0 } };
 const CLOUD_GLSL = /* glsl */`
     uniform float uCloudT; uniform float uCloudDay;
     float cl_h(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
@@ -242,13 +282,13 @@ function addCloudShadows(m) {
    environment map so every reflective surface carries the sunset.
    --------------------------------------------------------- */
 const skyMat = new THREE.ShaderMaterial({
-  uniforms: { uSun: { value: SUN }, uNight: { value: 0 }, uTime: { value: 0 }, uFog: { value: FOG }, uSunI: { value: 1 } },
+  uniforms: { uSun: { value: SUN }, uNight: { value: 0 }, uTime: { value: 0 }, uFog: { value: FOG }, uFogWarm: atmoU.uFogWarm, uSunI: { value: 1 } },
   side: THREE.BackSide, depthWrite: false,
   vertexShader: /* glsl */`
     varying vec3 vDir;
     void main(){ vDir = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */`
-    uniform vec3 uSun; uniform float uNight; uniform float uTime; uniform vec3 uFog; uniform float uSunI;
+    uniform vec3 uSun; uniform float uNight; uniform float uTime; uniform vec3 uFog; uniform vec3 uFogWarm; uniform float uSunI;
     varying vec3 vDir;
     float hash(vec3 p){ p = fract(p * 0.3183099 + 0.1); p *= 17.0; return fract(p.x * p.y * p.z * (p.x + p.y + p.z)); }
     float vh(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
@@ -258,14 +298,20 @@ const skyMat = new THREE.ShaderMaterial({
       vec3 d = normalize(vDir);
       float h = d.y;
       float sd = max(dot(d, uSun), 0.0);
-      vec3 zenith  = mix(vec3(0.012, 0.02, 0.052), vec3(0.004, 0.007, 0.022), uNight);
-      vec3 mid     = mix(vec3(0.07, 0.055, 0.11),  vec3(0.022, 0.02, 0.05),   uNight);
-      vec3 horizon = mix(vec3(0.72, 0.29, 0.11),   vec3(0.40, 0.14, 0.08),    uNight);
+      vec3 zenith  = mix(vec3(0.02, 0.045, 0.105), vec3(0.005, 0.009, 0.026), uNight);   // dusk blue → night
+      vec3 mid     = mix(vec3(0.09, 0.1, 0.145),   vec3(0.024, 0.026, 0.05),  uNight);   // hazy dusk blue
+      vec3 horizon = mix(vec3(0.95, 0.5, 0.21),    vec3(0.42, 0.14, 0.08),    uNight);   // gold → ember
+      vec3 belt    = mix(vec3(0.25, 0.17, 0.17),   vec3(0.05, 0.03, 0.042),   uNight);   // Belt of Venus
+      vec3 shadowB = mix(vec3(0.08, 0.09, 0.13),   vec3(0.016, 0.02, 0.038),  uNight);   // earth's shadow
+      float az = dot(normalize(d.xz + 1e-5), normalize(uSun.xz)) * 0.5 + 0.5;          // 1 toward the sun
       vec3 col = mix(mid, zenith, smoothstep(0.02, 0.55, h));
-      float band = exp(-max(h, 0.0) * 7.0);
-      col = mix(col, mix(uFog * 1.4, horizon, pow(sd, 2.5)), band);
-      col += vec3(1.0, 0.46, 0.18) * pow(sd, 22.0) * (0.9 - uNight * 0.5) * uSunI;
-      col += vec3(1.0, 0.78, 0.5) * smoothstep(0.99955, 0.99985, sd) * 8.0 * (1.0 - uNight * 0.8) * uSunI;
+      vec3 antiH = mix(shadowB, belt, smoothstep(0.0, 0.09, h)) ;
+      float band = exp(-max(h, 0.0) * 6.0);
+      col = mix(col, mix(antiH, horizon, pow(az, 3.0) * 0.55 + pow(sd, 2.5) * 0.45), band);
+      col = mix(col, belt * 0.9, (1.0 - az) * smoothstep(0.03, 0.12, h) * (1.0 - smoothstep(0.12, 0.3, h)) * 0.35);
+      col += vec3(1.0, 0.5, 0.2) * pow(sd, 9.0) * 0.12 * (1.0 - uNight * 0.6) * uSunI;     // wide golden halo
+      col += vec3(1.0, 0.48, 0.17) * pow(sd, 22.0) * (0.9 - uNight * 0.5) * uSunI;
+      col += vec3(1.0, 0.66, 0.34) * smoothstep(0.99955, 0.99985, sd) * 6.0 * (1.0 - uNight * 0.8) * uSunI;
       vec3 q = d * 380.0; vec3 id = floor(q);
       float r = hash(id);
       float star = step(0.9965, r) * smoothstep(0.32, 0.0, length(fract(q) - 0.5));
@@ -278,12 +324,14 @@ const skyMat = new THREE.ShaderMaterial({
         for (int i = 0; i < 5; i++) { cs += ca * vn(q); q = q * 2.1 + 3.7; ca *= 0.5; }
         float dens = smoothstep(0.47, 0.78, cs) * smoothstep(0.0, 0.05, h) * (1.0 - smoothstep(0.35, 0.8, h) * 0.6);
         float lit = pow(max(dot(normalize(vec3(d.x, 0.0, d.z)), normalize(vec3(uSun.x, 0.0, uSun.z))), 0.0), 3.0);
-        vec3 base = mix(vec3(0.06, 0.05, 0.085), vec3(0.018, 0.018, 0.035), uNight);
-        vec3 glow = mix(vec3(0.95, 0.42, 0.17), vec3(0.3, 0.1, 0.07), uNight);
-        vec3 cc = base + glow * (0.12 + 0.88 * lit) * (0.5 + 0.8 * smoothstep(0.5, 0.95, cs)) * (1.0 - smoothstep(0.02, 0.4, h) * 0.6);
+        vec3 base = mix(vec3(0.07, 0.066, 0.082), vec3(0.018, 0.018, 0.03), uNight);
+        vec3 glow = mix(vec3(1.0, 0.52, 0.24), vec3(0.3, 0.1, 0.07), uNight);
+        vec3 pink = mix(vec3(0.3, 0.2, 0.19), vec3(0.07, 0.04, 0.05), uNight);          // far-side clouds catch rose light
+        vec3 cc = base + mix(pink * 0.55, glow, lit) * (0.2 + 0.8 * lit + 0.25) * (0.5 + 0.8 * smoothstep(0.5, 0.95, cs)) * (1.0 - smoothstep(0.02, 0.4, h) * 0.55);
         col = mix(col, cc, dens * 0.9);
       }
-      col = mix(col, uFog, smoothstep(0.0, -0.06, h));
+      vec3 fogC = mix(uFog, uFogWarm, pow(sd, 5.0)) + uFogWarm * 0.4 * pow(sd, 24.0);
+      col = mix(col, fogC, smoothstep(0.0, -0.06, h));
       gl_FragColor = vec4(col, 1.0);
     }`
 });
@@ -301,11 +349,12 @@ scene.add(sky);
   pmrem.dispose();
 }
 
-scene.add(new THREE.HemisphereLight(0x3a4a78, 0x0a0806, 0.55));
-const sunLight = new THREE.DirectionalLight(0xffa46a, 2.4);
+const hemi = new THREE.HemisphereLight(0x6b7384, 0x2e1f14, 0.55);
+scene.add(hemi);
+const sunLight = new THREE.DirectionalLight(0xff9a4a, 2.9);
 sunLight.position.copy(SUN).multiplyScalar(1000);
 scene.add(sunLight);
-const fill = new THREE.DirectionalLight(0x6f86c9, 0.45);
+const fill = new THREE.DirectionalLight(0x8b96b8, 0.5);
 fill.position.set(200, 300, 800);
 scene.add(fill);
 
@@ -349,7 +398,7 @@ function terrainHeight(x, z) {
   geo.translate(0, 0, -800);
   const pos = geo.attributes.position, colors = new Float32Array(pos.count * 3);
   const rockA = new THREE.Color(0.055, 0.04, 0.034), rockB = new THREE.Color(0.19, 0.115, 0.07);
-  const sand = new THREE.Color(0.2, 0.15, 0.1), land = new THREE.Color(0.02, 0.019, 0.02), c = new THREE.Color();
+  const sand = new THREE.Color(0.26, 0.19, 0.12), land = new THREE.Color(0.05, 0.04, 0.034), c = new THREE.Color();
   for (let i = 0; i < pos.count; i++) {
     const x = pos.getX(i), z = pos.getZ(i), h = terrainHeight(x, z);
     pos.setY(i, h);
@@ -361,7 +410,28 @@ function terrainHeight(x, z) {
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   geo.computeVertexNormals();
-  const terrain = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+  const terrainMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 });
+  terrainMat.onBeforeCompile = (sh) => {
+    sh.uniforms.uStreet = streetU.uStreet;
+    sh.vertexShader = 'varying vec3 vTW;\n' + sh.vertexShader.replace('#include <project_vertex>', '#include <project_vertex>\nvTW = (modelMatrix * vec4(transformed, 1.0)).xyz;');
+    sh.fragmentShader = 'uniform float uStreet;\nvarying vec3 vTW;\n' + sh.fragmentShader.replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
+      // the boulevard is polished stone: at a low angle it carries the sunset sky down the street
+      float blvdM = exp(-vTW.x * vTW.x / 330.0) * step(-1865.0, vTW.z) * step(vTW.z, 545.0) * step(vTW.y, 3.0);
+      roughnessFactor = mix(roughnessFactor, 0.2, blvdM);`).replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      {
+        float mx = mod(vTW.x + 30.0, 60.0), mz = mod(vTW.z + 30.0, 60.0);
+        float dx = min(mx, 60.0 - mx), dz = min(mz, 60.0 - mz);
+        float along = dx < dz ? vTW.z : vTW.x;
+        float pools = 0.2 + 0.8 * pow(0.5 + 0.5 * cos(along * 0.2618), 3.0);                // a pool under every lamp
+        float road = max(exp(-dx * dx / 6.0), exp(-dz * dz / 6.0)) * pools + max(exp(-dx * dx / 60.0), exp(-dz * dz / 60.0)) * 0.05;
+        road = max(road, exp(-vTW.x * vTW.x / 260.0) * (0.55 + 0.45 * pools));                   // the boulevard
+        float coast = 500.0 + 45.0 * sin(vTW.z * 0.0023) + 25.0 * sin(vTW.z * 0.0061 + 1.3);
+        float inCity = step(-845.0, vTW.x) * step(vTW.x, coast - 38.0) * step(-1865.0, vTW.z) * step(vTW.z, 545.0) * step(vTW.y, 3.0);
+        diffuseColor.rgb *= 1.0 - 0.45 * road * inCity;                                          // asphalt
+        totalEmissiveRadiance += vec3(1.0, 0.5, 0.18) * road * inCity * uStreet;                // sodium glow
+      }`);
+  };
+  const terrain = new THREE.Mesh(geo, terrainMat);
   terrain.receiveShadow = false;
   scene.add(terrain);
 }
@@ -397,7 +467,7 @@ function makeWaterNormals() {
 const water = new Water(new THREE.PlaneGeometry(5200, 10400), {
   textureWidth: isMobile ? 512 : 1024, textureHeight: isMobile ? 512 : 1024,
   waterNormals: makeWaterNormals(),
-  sunDirection: SUN.clone(), sunColor: 0xffb27a, waterColor: 0x02202a,
+  sunDirection: SUN.clone(), sunColor: 0xffa24e, waterColor: 0x032d38,
   distortionScale: 1.4, fog: true,
 });
 water.material.uniforms.size.value = 5.5;
@@ -491,9 +561,12 @@ const cityFrag = /* glsl */`
       vec3 n = normalize(vN);
       float tint = hash(vSeed * 0.37);
       float cs = cloudShade(vWorld);
-      vec3 plaster = mix(vec3(0.37, 0.34, 0.3), vec3(0.38, 0.32, 0.24), tint) * mix(vec3(0.34, 0.35, 0.42), vec3(1.1, 1.02, 0.94), cs);   // white / sand limewash, dimmed under cloud
-      vec3 amb = mix(vec3(0.075, 0.075, 0.1), vec3(0.03, 0.03, 0.05), uNight);
-      vec3 sunc = vec3(1.0, 0.5, 0.22) * (1.0 - uNight * 0.85);
+      // real mix of finishes: white limestone, sand render, grey concrete; each building a little lighter or darker
+      vec3 plaster = tint < 0.55 ? vec3(0.47, 0.44, 0.4) : tint < 0.85 ? vec3(0.46, 0.39, 0.3) : vec3(0.4, 0.39, 0.37);
+      plaster *= (0.84 + 0.26 * hash(vSeed * 1.91 + 3.7)) * mix(vec3(0.55, 0.56, 0.62), vec3(1.06, 1.02, 0.97), cs);
+      vec3 amb = mix(vec3(0.085, 0.088, 0.108), vec3(0.03, 0.033, 0.05), uNight);               // sky fill, only slightly cool
+      amb += mix(vec3(0.05, 0.028, 0.016), vec3(0.018, 0.01, 0.006), uNight) * (1.0 - n.y);      // warm bounce off the sand
+      vec3 sunc = vec3(1.0, 0.56, 0.26) * 1.3 * (1.0 - uNight * 0.88);
       float sunF = max(0.0, dot(n, normalize(vec3(-0.36, 0.25, -1.0))));
       float along = abs(n.x) > 0.5 ? vWorld.z : vWorld.x;
       float y = vWorld.y, yl = vLocalY * vH;
@@ -547,6 +620,7 @@ const cityFrag = /* glsl */`
         vec3 winCol = mix(glass, vec3(0.07, 0.04, 0.022), shutter * lattice);
         float lit = step(1.0 - uLit, r) * step(0.1, r2);
         vec3 warm = mix(vec3(1.0, 0.56, 0.26), vec3(1.0, 0.8, 0.58), r2);
+        warm = mix(warm, vec3(0.72, 0.84, 1.0) * 0.85, step(0.86, r3) * (1.0 - shutter));
         vec3 nearLight = lit * warm * (0.25 + 0.85 * r2) * mix(1.0, 0.5 * (1.0 - lattice), shutter) * (0.6 + 0.4 * recess);
         vec3 farLight = uLit * 0.9 * warm * 0.55;
         float wA = mix(win, 0.26, aa);
@@ -644,7 +718,7 @@ for (let gx = -13; gx <= 7; gx++) {
 }
 
 
-const plasterMat = new THREE.MeshStandardMaterial({ color: 0xded3c0, roughness: 0.85, emissive: 0x2a1d10, emissiveIntensity: 0.35 });
+const plasterMat = new THREE.MeshStandardMaterial({ color: 0xe2cfb2, roughness: 0.85, emissive: 0x2a1d10, emissiveIntensity: 0.4, envMapIntensity: 0.4 });   // warm limestone, not sky-tinted
 // neighbourhood mosques: base, drum, dome and a single minaret, instanced
 {
   const parts = [];
@@ -879,14 +953,84 @@ const dhows = [];
 
 
 /* ---------------------------------------------------------
+   Gulls — a loose flock drifting across the golden sky over the
+   boulevard as the camera comes down to street level. Flapping
+   and gliding happen in the vertex shader; the flight is scripted
+   on the film clock so every loop plays it the same way.
+   --------------------------------------------------------- */
+const flock = (() => {
+  const N = 34;
+  const v = [
+    0, 0, 0.42,  0.07, 0, 0,  0, 0.02, -0.4,   -0.07, 0, 0,  0, 0.02, -0.4,  0, 0, 0.42,     // body
+    -0.05, 0, 0.14,  -0.05, 0, -0.12,  -0.48, 0, 0.06,   -0.48, 0, 0.06,  -0.05, 0, -0.12,  -0.9, 0, -0.14,   // left wing
+    0.05, 0, -0.12,  0.05, 0, 0.14,  0.48, 0, 0.06,   0.05, 0, -0.12,  0.48, 0, 0.06,  0.9, 0, -0.14,          // right wing
+  ];
+  const geo = new THREE.InstancedBufferGeometry();
+  geo.setAttribute('position', new THREE.Float32BufferAttribute(v, 3));
+  const phase = new Float32Array(N), offs = [];
+  for (let i = 0; i < N; i++) {
+    phase[i] = rand();
+    offs.push([(rand() - 0.5) * 38, (rand() - 0.5) * 11, (rand() - 0.5) * 30, rand() * 6.28, 0.85 + rand() * 0.35]);
+  }
+  geo.setAttribute('aPhase', new THREE.InstancedBufferAttribute(phase, 1));
+  const mat = new THREE.ShaderMaterial({
+    side: THREE.DoubleSide, fog: true,
+    uniforms: THREE.UniformsUtils.merge([THREE.UniformsLib.fog, { uTime: { value: 0 } }]),
+    vertexShader: /* glsl */`
+      attribute float aPhase; uniform float uTime;
+      #include <fog_pars_vertex>
+      void main(){
+        vec3 p = position;
+        float w = abs(p.x);
+        float glide = smoothstep(-0.2, 0.7, sin(uTime * 0.8 + aPhase * 17.0));
+        float a = mix(0.18, sin(uTime * 7.0 + aPhase * 6.2832), glide);
+        p.y += a * (0.55 * w + 0.35 * w * w);
+        p.x *= 1.0 - 0.12 * abs(a);
+        vec4 mvPosition = modelViewMatrix * instanceMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mvPosition;
+        #include <fog_vertex>
+      }`,
+    fragmentShader: /* glsl */`
+      #include <fog_pars_fragment>
+      void main(){
+        gl_FragColor = vec4(0.03, 0.024, 0.026, 1.0);
+        #include <fog_fragment>
+      }`,
+  });
+  const mesh = new THREE.InstancedMesh(geo, mat, N);
+  mesh.frustumCulled = false;
+  scene.add(mesh);
+  const d = new THREE.Object3D(), c = new THREE.Vector3(), h = new THREE.Vector3();
+  function update(t) {                               // t = seconds since the film started
+    mesh.visible = t > 6 && t < 21;
+    if (!mesh.visible) return;
+    mat.uniforms.uTime.value = t;
+    const u = t - 12;
+    c.set(62 - 12.5 * u, 104 + 6 * Math.sin(u * 0.25), -40 - 3.5 * u - 0.35 * u * u);   // a lazy leftward arc
+    h.set(-12.5, 1.5 * Math.cos(u * 0.25), -3.5 - 0.7 * u).normalize();
+    for (let i = 0; i < N; i++) {
+      const [ox, oy, oz, ph, sc] = offs[i];
+      d.position.set(c.x + ox + Math.sin(t * 0.5 + ph) * 1.6, c.y + oy + Math.sin(t * 0.7 + ph * 2.0) * 1.2, c.z + oz + Math.cos(t * 0.45 + ph) * 1.6);
+      d.lookAt(d.position.x + h.x, d.position.y + h.y, d.position.z + h.z);
+      d.rotateZ(Math.sin(t * 0.6 + ph) * 0.18);
+      d.scale.setScalar(sc * 1.15);
+      d.updateMatrix();
+      mesh.setMatrixAt(i, d.matrix);
+    }
+    mesh.instanceMatrix.needsUpdate = true;
+  }
+  return { update };
+})();
+
+/* ---------------------------------------------------------
    Street lamps + traffic — points animated entirely on the GPU
    --------------------------------------------------------- */
 const lightsMat = new THREE.ShaderMaterial({
   transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-  uniforms: { uTime: { value: 0 }, uScale: { value: 1 } },
+  uniforms: { uTime: { value: 0 }, uScale: { value: 1 }, uDpr: { value: 1 } },
   vertexShader: /* glsl */`
     attribute vec3 aColor; attribute vec4 aMove; attribute float aSize;   // aMove: dirX, dirZ, speed, loop length
-    uniform float uTime; uniform float uScale;
+    uniform float uTime; uniform float uScale; uniform float uDpr;
     varying vec3 vColor; varying float vFade;
     void main(){
       vec3 p = position;
@@ -899,8 +1043,8 @@ const lightsMat = new THREE.ShaderMaterial({
       vec4 mv = modelViewMatrix * vec4(p, 1.0);
       gl_Position = projectionMatrix * mv;
       float ps = fract(aSize) * 2.0 * uScale / -mv.z;
-      gl_PointSize = clamp(ps, 2.0, 26.0);
-      vFade *= smoothstep(0.0, 2.0, ps) * 0.85;                   // sub-pixel lights dim instead of popping
+      gl_PointSize = clamp(ps, 2.0 * uDpr, 26.0 * uDpr);
+      vFade *= smoothstep(0.0, 2.0 * uDpr, ps) * 0.85;                   // sub-pixel lights dim instead of popping
       vColor = aColor;
       vFade *= exp(-0.00065 * -mv.z);
     }`,
@@ -1445,27 +1589,36 @@ const composer = new EffectComposer(renderer, rt);
 composer.setPixelRatio(DPR);
 composer.setSize(innerWidth, innerHeight);
 composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.55, 0.45, 0.9);
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.42, 0.45, 0.9);
+// wider bloom mips tinted warm: highlights halate amber like film instead of blooming grey-white
+[[1, 1, 1], [1, 0.97, 0.93], [1, 0.93, 0.85], [1, 0.89, 0.79], [1, 0.86, 0.75]].forEach((c, i) => bloom.bloomTintColors[i].set(...c));
 composer.addPass(bloom);
 composer.addPass(new OutputPass());
 const finish = new ShaderPass({
-  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uCA: { value: 0.006 }, uVig: { value: 0.5 } },
+  uniforms: { tDiffuse: { value: null }, uTime: { value: 0 }, uCA: { value: 0.006 }, uVig: { value: 0.5 }, uGrain: { value: 0.016 }, uNight: { value: 0 } },
   vertexShader: /* glsl */`varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
   fragmentShader: /* glsl */`
-    uniform sampler2D tDiffuse; uniform float uTime; uniform float uCA; uniform float uVig;
+    uniform sampler2D tDiffuse; uniform float uTime; uniform float uCA; uniform float uVig; uniform float uGrain; uniform float uNight;
     varying vec2 vUv;
     void main(){
       vec2 c = vUv - 0.5;
       float d = dot(c, c);
       vec2 off = c * d * uCA;
       vec3 col = vec3(texture2D(tDiffuse, vUv + off).r, texture2D(tDiffuse, vUv).g, texture2D(tDiffuse, vUv - off).b);
+      // grade: cool the shadows, warm the highlights, lift saturation where colour is timid
+      float l = dot(col, vec3(0.2126, 0.7152, 0.0722));
+      col *= mix(mix(vec3(0.96, 0.98, 1.04), vec3(0.96, 0.98, 1.05), uNight), vec3(1.03, 1.0, 0.95), smoothstep(0.04, 0.55, l));
+      float sat = max(col.r, max(col.g, col.b)) - min(col.r, min(col.g, col.b));
+      col = max(mix(vec3(l), col, 0.93), 0.0);                                                // photographic, not poster: a touch under full saturation
+      col = mix(col, col * col * (3.0 - 2.0 * col), 0.2);                                   // gentle S-curve
       col *= mix(1.0, 1.0 - uVig, smoothstep(0.08, 0.55, d * 1.5));
       float g = fract(sin(dot(gl_FragCoord.xy + fract(uTime * 7.13) * 400.0, vec2(12.9898, 78.233))) * 43758.5453);
-      col += (g - 0.5) * 0.016;
+      col += (g - 0.5) * uGrain;
       gl_FragColor = vec4(col, 1.0);
     }`
 });
 composer.addPass(finish);
+if (RECORD) finish.uniforms.uGrain.value = 0.009;          // finer grain: the encoder keeps detail instead of noise
 
 
 /* ---------------------------------------------------------
@@ -1482,6 +1635,7 @@ addEventListener('resize', () => {
 });
 function setPointScale() {
   lightsMat.uniforms.uScale.value = (innerHeight * DPR * 0.5) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  lightsMat.uniforms.uDpr.value = DPR;
 }
 
 /* ---------------------------------------------------------
@@ -1491,8 +1645,9 @@ function setPointScale() {
 const logoRig = (() => {
   const W = 1400, H = 480;
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
-  const r = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: true });
-  r.setPixelRatio(1); r.setSize(W, H, false);
+  // supersampled rather than MSAA: the multisampled resolve flickered the wordmark's front faces on some GPUs
+  const r = new THREE.WebGLRenderer({ canvas: cv, alpha: true, antialias: false });
+  r.setPixelRatio(2); r.setSize(W, H, false);
   r.toneMapping = THREE.ACESFilmicToneMapping; r.toneMappingExposure = 1.0;
   const sc = new THREE.Scene();
   const pm = new THREE.PMREMGenerator(r);
@@ -1547,7 +1702,7 @@ const logoRig = (() => {
     const w = Math.round(target.clientWidth * dpr), h = Math.round(target.clientHeight * dpr);
     if (!w || !h) return;
     if (target.width !== w || target.height !== h) { target.width = w; target.height = h; }
-    let ctx = ctxs.get(target); if (!ctx) { ctx = target.getContext('2d'); ctxs.set(target, ctx); }
+    let ctx = ctxs.get(target); if (!ctx) { ctx = target.getContext('2d'); ctx.imageSmoothingQuality = 'high'; ctxs.set(target, ctx); }
     ctx.clearRect(0, 0, w, h);
     ctx.drawImage(cv, 0, 0, w, h);
   }
@@ -1566,9 +1721,10 @@ const logoRig = (() => {
 const logoLoader = document.getElementById('logoLoader');
 const markEl = document.querySelector('#loader .mark'), loaderEl = document.getElementById('loader');
 function renderLogos(t) {
-  if (markEl.style.visibility !== 'hidden' && loaderEl.style.display !== 'none') logoRig.renderTo(logoLoader, t, 'loader');
+  if (markEl.style.visibility !== 'hidden' && loaderEl.style.display !== 'none') logoRig.renderTo(logoLoader, t - logoT0, 'loader');
 }
-window.TamlikLoader.logoIn = () => logoRig.intro();
+let logoT0 = 0;
+window.TamlikLoader.logoIn = () => { logoT0 = time; window.__marks.push(performance.now()); return logoRig.intro(); };
 
 /* ---------------------------------------------------------
    Frame loop
@@ -1603,19 +1759,27 @@ function frame() {
   if (first || DEBUG_P !== null) { camera.quaternion.copy(q); first = false; }
   else camera.quaternion.slerp(q, 1 - Math.exp(-dt * 4.5));
 
-  const fov = s.fov + intro.v * 8;
+  // the shots are framed for 16:9; on a narrower (portrait) screen open the lens so the width still breathes
+  const narrow = camera.aspect < 16 / 9 ? Math.pow((16 / 9) / camera.aspect, FOV_K) : 1;
+  const fov = THREE.MathUtils.radToDeg(2 * Math.atan(Math.tan(THREE.MathUtils.degToRad((s.fov + intro.v * 8) / 2)) * narrow));
   if (Math.abs(camera.fov - fov) > 0.01) { camera.fov = fov; camera.updateProjectionMatrix(); setPointScale(); }
 
   const night = smooth(0.12, 0.95, camP) * 0.8;
   skyMat.uniforms.uNight.value = night;
   skyMat.uniforms.uTime.value = time;
-  cityMat.uniforms.uLit.value = 0.26 + 0.16 * night;
+  cityMat.uniforms.uLit.value = 0.16 + 0.5 * night;                                     // windows switch on as the light goes
+  FOG.copy(PAL.fogCool[0]).lerp(PAL.fogCool[1], night / 0.8);
+  atmoU.uFogWarm.value.copy(PAL.fogWarm[0]).lerp(PAL.fogWarm[1], night / 0.8);
+  streetU.uStreet.value = 0.02 + 0.11 * smooth(0.2, 0.8, night / 0.8);
+  hemi.intensity = 0.55 - 0.32 * night;
+  finish.uniforms.uNight.value = night;
   cityMat.uniforms.uNight.value = night;
   water.material.uniforms.time.value = time * 0.45;
   surfMat.uniforms.uTime.value = time;
   surfMat.uniforms.uNight.value = night;
   for (const d of dhows) { d.position.y = 0.2 + Math.sin(time * 1.1 + d.userData.phase) * 0.25; d.rotation.z = Math.sin(time * 0.8 + d.userData.phase) * 0.035; }
   lightsMat.uniforms.uTime.value = time;
+  flock.update(time - filmT0);
   sky.position.copy(camera.position);
   tower.userData.beacon.material.color.setRGB(5, 0.25, 0.1).multiplyScalar(0.25 + 0.75 * Math.pow(0.5 + 0.5 * Math.sin(time * 1.6), 3));
   cloudU.uCloudT.value = time;
@@ -1623,7 +1787,7 @@ function frame() {
 
   // threshold moment: a touch more glow and lens fringing as we cross into the penthouse
   const cross = Math.exp(-Math.pow((camP - 0.595) / 0.03, 2));
-  bloom.strength = 0.55 - interior * 0.22 + cross * 0.12;
+  bloom.strength = 0.42 - interior * 0.16 + cross * 0.1;
   skyMat.uniforms.uSunI.value = 1 - interior * 0.8;
   sunLight.intensity = 2.4 * (1 - interior * 0.75);
   finish.uniforms.uCA.value = 0.006 + cross * 0.014;
@@ -1659,7 +1823,9 @@ function curtainsClose(tl) {
     .to({}, { duration: 2.8 });
 }
 
+let filmT0 = 0;
 function runFilm() {
+  filmT0 = time;
   const tl = gsap.timeline({ onComplete: () => { resetFilm(); runFilm(); } });
   curtainsOpen(tl);
   let at = 2.4;                                   // start moving as the curtains part
@@ -1686,16 +1852,27 @@ setPointScale();
     for (const m of [].concat(o.material)) if (m.isMeshStandardMaterial) addCloudShadows(m);
   });
   if (!water.material.fragmentShader.includes('cloudShade(worldPosition')) console.warn('water cloud patch not applied');
+  scene.traverse((o) => {
+    for (const m of [].concat(o.material || [])) {
+      if (!m.fog || m.userData.atmo) continue;
+      m.userData.atmo = true;
+      if (m.isShaderMaterial) { Object.assign(m.uniforms, atmoU); continue; }
+      const prev = m.onBeforeCompile;
+      m.onBeforeCompile = (sh, r) => { prev.call(m, sh, r); Object.assign(sh.uniforms, atmoU); };
+    }
+  });
 }
 renderer.compile(scene, camera);
 frame();
 renderer.setAnimationLoop(frame);
+window.__ready = true;
+if (RECORD) window.__probe = () => ({ t: time - filmT0, p: camP, pos: camera.position.toArray().map(v => +v.toFixed(1)), dir: camera.getWorldDirection(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)), fov: +camera.fov.toFixed(1) });
 
 if (DEBUG_P !== null) {
   gsap.set('#loader', { display: 'none' });
 } else {
-  logoRig.intro();
-  gsap.delayedCall(2.6, () => window.TamlikLoader.finish(runFilm));
+  window.TamlikLoader.logoIn();
+  gsap.delayedCall(3.0, () => window.TamlikLoader.finish(runFilm));
 }
 </script>
 </body>
