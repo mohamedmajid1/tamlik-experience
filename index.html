@@ -213,7 +213,8 @@ try {
   document.getElementById('loader')?.remove();
   throw e;
 }
-let DPR = RECORD ? devicePixelRatio : Math.min(devicePixelRatio, isMobile ? 1.25 : 1.75);   // recording supersamples via deviceScaleFactor
+// phones start sharp (their screens are 2-3x): the live quality check below steps down only if a phone can't keep up
+let DPR = RECORD ? devicePixelRatio : Math.min(devicePixelRatio, isMobile ? 2 : 1.75);   // recording supersamples via deviceScaleFactor
 renderer.setPixelRatio(DPR);
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1440,10 +1441,13 @@ const coreMat = new THREE.MeshStandardMaterial({ color: 0x10141b, roughness: 0.2
 const dampSunGlint = (sh) => sh.fragmentShader.replace('#include <lights_fragment_end>', '#include <lights_fragment_end>\nreflectedLight.directSpecular *= 0.12;');
 // from far away the fins are thinner than a pixel and strobe against the lit floors behind them; there they turn
 // partly see-through (alpha-to-coverage, so no sorting), which averages fins and glass the way the eye would
+// the spire keeps the same metal but stays solid at any distance
+const spireMat = new THREE.MeshStandardMaterial({ color: 0xc6a168, roughness: 0.42, metalness: 1, envMapIntensity: 1.1 });
+spireMat.onBeforeCompile = (sh) => { sh.fragmentShader = dampSunGlint(sh); };
 finMat.alphaToCoverage = true;
 finMat.onBeforeCompile = (sh) => {
   sh.fragmentShader = dampSunGlint(sh).replace('#include <dithering_fragment>',
-    '#include <dithering_fragment>\ngl_FragColor.a = 1.0 - 0.7 * smoothstep(220.0, 650.0, length(vViewPosition));');
+    '#include <dithering_fragment>\ngl_FragColor.a = 1.0 - 0.3 * smoothstep(220.0, 650.0, length(vViewPosition));');
 };
 // instance colour drives the interior glow of each floor instead of tinting the glass
 // and is broken into individual rooms so floors read as lived-in rather than flat panels
@@ -1511,7 +1515,7 @@ coreMat.onBeforeCompile = (sh) => {
     crown.add(bar);
   }
   tower.add(crown);
-  const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.6, 26, 8), finMat);
+  const spire = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.6, 26, 8), spireMat);
   spire.position.y = top + 3 * LH + 13;
   tower.add(spire);
   const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.7, 12, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(5, 0.25, 0.1) }));
@@ -2085,7 +2089,7 @@ function sampleShot(p) {
    Post-processing — bloom, then a filmic finish (vignette,
    subtle lens fringing, grain)
    --------------------------------------------------------- */
-const rt = new THREE.WebGLRenderTarget(innerWidth * DPR, innerHeight * DPR, { type: THREE.HalfFloatType, samples: isMobile ? 0 : 4 });
+const rt = new THREE.WebGLRenderTarget(innerWidth * DPR, innerHeight * DPR, { type: THREE.HalfFloatType, samples: 4 });
 const composer = new EffectComposer(renderer, rt);
 composer.setPixelRatio(DPR);
 composer.setSize(innerWidth, innerHeight);
@@ -2274,8 +2278,12 @@ const quality = (() => {
   if (RECORD || params.has('hq')) return { frame() {}, curtain() {} };
   const steps = [];
   if (aoPass) steps.push(['ambient occlusion off', () => { aoPass.enabled = false; }]);
-  if (DPR > 1) steps.push(['pixel ratio 1', () => setDpr(1)]);
-  steps.push(['resolution 90%', () => setDpr(Math.min(DPR, 1) * 0.9)]);
+  if (isMobile) {                          // phones: 2 -> 1.5 -> 1.25 -> 1, never below the page's own size
+    for (const v of [1.5, 1.25, 1]) if (DPR > v) steps.push(['pixel ratio ' + v, () => setDpr(v)]);
+  } else {
+    if (DPR > 1) steps.push(['pixel ratio 1', () => setDpr(1)]);
+    steps.push(['resolution 90%', () => setDpr(Math.min(DPR, 1) * 0.9)]);
+  }
   // keeping up = frames arrive evenly at the display's own rate (60, 50, 30 Hz alike); falling behind shows as
   // frames that take one or more extra refreshes. Gaps over a second (a hidden tab) don't count.
   const late = (t) => {
